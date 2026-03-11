@@ -217,6 +217,7 @@ class AgentScores(BaseModel, frozen=True):
 class ConversationScores(BaseModel, frozen=True):
     """All scores for one full pipeline conversation."""
     conversation_id: str
+    persona_type: PersonaType = PersonaType.COOPERATIVE  # Track which scenario
     agent_scores: dict[str, AgentScores]    # AgentType.value → scores
     handoff_scores: dict[str, float]         # "handoff_1", "handoff_2" → score
     system_score: float = Field(ge=1.0, le=10.0)

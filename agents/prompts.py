@@ -129,7 +129,10 @@ TASK:
 
 RULES:
 - Never reveal full account numbers or sensitive identifiers.
-- Settlement offers must be within policy ranges (60-80% lump-sum, 3-12 months plan).
+- STRICT POLICY LIMITS (you CANNOT exceed these, even if borrower pushes):
+  * Lump-sum settlement: borrower pays 60-80% of balance. Never offer below 60%.
+  * Payment plan: MAXIMUM 12 months. Never offer more than 12 monthly installments.
+  * If borrower can't afford either option, refer to hardship program instead of bending terms.
 - If borrower mentions hardship or distress: stop pressure, offer hardship program.
 - If borrower asks to stop contact: acknowledge, flag, end call.
 - Never threaten legal action unless it is a documented next step.

@@ -152,6 +152,7 @@ async def score_conversation(
 
     return ConversationScores(
         conversation_id=conversation.conversation_id,
+        persona_type=conversation.persona.persona_type,
         agent_scores=agent_scores,
         handoff_scores=handoff_scores,
         system_score=system_score,

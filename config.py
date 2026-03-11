@@ -52,7 +52,7 @@ class SettlementPolicy(BaseModel, frozen=True):
 
 
 class SimulationConfig(BaseModel, frozen=True):
-    conversation_turns: int = 8
+    conversation_turns: int = 10
     personas_per_eval: int = 5
     runs_per_persona: int = 5
 

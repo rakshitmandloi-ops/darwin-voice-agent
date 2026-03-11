@@ -121,23 +121,31 @@ def _persona_breakdown(
     child_scores: list[ConversationScores],
 ) -> dict[str, float]:
     """Compute mean score difference per persona type."""
-    # We don't have persona info in ConversationScores directly,
-    # so use position-based matching (scores are generated in persona order)
-    n = min(len(parent_scores), len(child_scores))
-    if n == 0:
-        return {}
+    # Group scores by persona type
+    parent_by_persona: dict[str, list[float]] = {}
+    child_by_persona: dict[str, list[float]] = {}
 
-    # Simple approach: if we have 5+ scores, assume groups of runs_per_persona
-    # For now, return overall diff as a single entry
-    parent_vals = [s.weighted_total for s in parent_scores[:n]]
-    child_vals = [s.weighted_total for s in child_scores[:n]]
+    for s in parent_scores:
+        key = s.persona_type.value
+        parent_by_persona.setdefault(key, []).append(s.weighted_total)
 
-    return {
-        "overall": round(
-            sum(c - p for c, p in zip(child_vals, parent_vals)) / n,
-            4,
-        ),
-    }
+    for s in child_scores:
+        key = s.persona_type.value
+        child_by_persona.setdefault(key, []).append(s.weighted_total)
+
+    # Compute mean diff per persona
+    breakdown: dict[str, float] = {}
+    all_personas = set(list(parent_by_persona.keys()) + list(child_by_persona.keys()))
+
+    for persona in all_personas:
+        parent_vals = parent_by_persona.get(persona, [])
+        child_vals = child_by_persona.get(persona, [])
+        if parent_vals and child_vals:
+            parent_mean = sum(parent_vals) / len(parent_vals)
+            child_mean = sum(child_vals) / len(child_vals)
+            breakdown[persona] = round(child_mean - parent_mean, 4)
+
+    return breakdown
 
 
 def _empty_comparison(parent_version: str, child_version: str) -> EvalComparison:

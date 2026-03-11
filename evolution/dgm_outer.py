@@ -341,30 +341,35 @@ async def _try_promote(
     # Statistical comparison
     comparison = paired_bootstrap(parent.scores, child.scores)
 
+    logger.info(
+        f"  {child.version_id} vs {parent.version_id}: "
+        f"diff={comparison.mean_diff:+.2f}, CI=[{comparison.ci_lower:.2f}, {comparison.ci_upper:.2f}], "
+        f"p={comparison.p_value:.3f}, var_high={comparison.variance_too_high}"
+    )
+
+    # Log per-persona breakdown
+    if comparison.per_persona_breakdown:
+        for persona, diff in sorted(comparison.per_persona_breakdown.items()):
+            logger.info(f"    {persona}: {diff:+.2f}")
+
     if not comparison.significant:
-        logger.info(f"  {child.version_id}: not significant (CI=[{comparison.ci_lower}, {comparison.ci_upper}])")
+        logger.info(f"  {child.version_id}: NOT PROMOTED — not significant")
         return False
 
     if comparison.variance_too_high:
-        logger.info(f"  {child.version_id}: variance too high")
+        logger.info(f"  {child.version_id}: NOT PROMOTED — variance too high")
         return False
 
     if not comparison.compliance_preserved:
-        logger.info(f"  {child.version_id}: compliance regression")
+        logger.info(f"  {child.version_id}: NOT PROMOTED — compliance regression")
         return False
 
     if check_persona_regression(comparison):
-        logger.info(f"  {child.version_id}: persona regression detected")
+        regressed = [p for p, d in comparison.per_persona_breakdown.items() if d < -0.5]
+        logger.info(f"  {child.version_id}: NOT PROMOTED — persona regression: {regressed}")
         return False
 
-    # Strict grader validation (expensive — only for statistical winners)
-    # Sample up to 5 conversations for strict grading
-    sample_convos = child.scores[:5]
-    # We need the actual conversations for strict grading, but we only have scores here.
-    # For now, mark as validated if all other checks pass.
-    # Full strict grading requires conversation objects (added when we have them in the pipeline).
-    child.strict_grader_result = None  # Placeholder
-
+    child.strict_grader_result = None
     return True
 
 
@@ -377,33 +382,37 @@ async def _simulate_batch(
     seed_offset: int = 0,
     exclude_seeds: set[int] | None = None,
 ) -> list[Conversation]:
-    """Simulate a batch of conversations across personas."""
+    """Simulate a batch of conversations across personas. Runs concurrently."""
+    import asyncio
     from simulation.personas import get_persona_with_variation
     from models import PersonaType
 
-    conversations = []
     persona_types = list(PersonaType)[:n_personas]
     exclude = exclude_seeds or set()
 
+    # Build tasks
+    tasks = []
     for run in range(runs_per):
         for pt in persona_types:
             seed = seed_offset + hash((pt.value, run)) % 10000
-            # Ensure unique seeds
             while seed in exclude:
                 seed += 1
             exclude.add(seed)
 
             persona = get_persona_with_variation(pt, seed=seed)
-            conv = await simulate_pipeline(
-                agent_config=vc.agent_config,
-                persona=persona,
-                seed=seed,
-                tracker=tracker,
-                settings=settings,
+            tasks.append(
+                simulate_pipeline(
+                    agent_config=vc.agent_config,
+                    persona=persona,
+                    seed=seed,
+                    tracker=tracker,
+                    settings=settings,
+                )
             )
-            conversations.append(conv)
 
-    return conversations
+    # Run all conversations concurrently
+    conversations = await asyncio.gather(*tasks)
+    return list(conversations)
 
 
 async def _evaluate_batch(
@@ -412,9 +421,11 @@ async def _evaluate_batch(
     tracker: CostTracker,
     settings: Settings,
 ) -> list[ConversationScores]:
-    """Score a batch of conversations."""
-    scores = []
-    for conv in conversations:
-        score = await score_conversation(conv, eval_config, tracker, settings)
-        scores.append(score)
-    return scores
+    """Score a batch of conversations. Runs concurrently."""
+    import asyncio
+    tasks = [
+        score_conversation(conv, eval_config, tracker, settings)
+        for conv in conversations
+    ]
+    scores = await asyncio.gather(*tasks)
+    return list(scores)

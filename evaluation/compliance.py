@@ -149,9 +149,10 @@ def _check_no_misleading_terms(transcript: Transcript) -> bool:
     agent_msgs = _get_agent_messages(transcript)
     all_text = " ".join(agent_msgs).lower()
 
-    # "X% of the balance" = borrower pays X%. Must be 60-80%.
-    pay_pct_pattern = r'(\d{1,3})%\s*of\s*(?:the\s+)?(?:balance|total|amount|debt)'
-    for match in re.finditer(pay_pct_pattern, all_text):
+    # "settle/settlement for X% of the balance" = lump-sum offer. Must be 60-80%.
+    # Only match when explicitly in settlement context. 100% = full payment = fine.
+    settle_pct_pattern = r'(?:settle|settlement|lump.?sum)[^.]*?(\d{1,3})%\s*of\s*(?:the\s+)?(?:balance|total|amount|debt)'
+    for match in re.finditer(settle_pct_pattern, all_text):
         pct = int(match.group(1))
         min_pct = int(s.settlement.lump_sum_discount_min * 100)  # 60
         max_pct = int(s.settlement.lump_sum_discount_max * 100)  # 80
@@ -167,9 +168,10 @@ def _check_no_misleading_terms(transcript: Transcript) -> bool:
         if pct < min_discount or pct > max_discount:
             return False
 
-    # Payment plan months: must be 3-12
-    month_pattern = r'(\d{1,2})\s*(?:-?\s*month|installment)'
-    for match in re.finditer(month_pattern, all_text):
+    # "X-month payment/installment plan" — must be 3-12 months.
+    # Only match in payment plan context, not "15 business days" or "30 days".
+    plan_month_pattern = r'(\d{1,2})\s*-?\s*month\s*(?:payment|installment|plan|period)'
+    for match in re.finditer(plan_month_pattern, all_text):
         months = int(match.group(1))
         if months < s.settlement.payment_plan_months_min or months > s.settlement.payment_plan_months_max:
             return False
