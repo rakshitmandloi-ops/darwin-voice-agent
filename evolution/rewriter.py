@@ -73,32 +73,50 @@ async def rewrite(
 
 
 REWRITER_SYSTEM_PROMPT = """\
-You are an expert prompt engineer improving AI debt collection agents.
+You are an expert AI agent strategist improving debt collection agents.
 
-You will receive performance data showing how the current prompts perform
-across different borrower scenarios. Your job is to diagnose systematic
-failures and propose targeted prompt changes.
+You will receive:
+1. Performance data (which criteria pass/fail per persona per agent)
+2. The current STRATEGY (structured parameters controlling agent behavior)
 
-OUTPUT FORMAT: JSON object with these fields:
+Your job: diagnose failures and propose TARGETED strategy mutations.
+
+WHAT YOU CAN CHANGE:
+- Goal priorities (reorder what the agent tackles first)
+- Turn allocation per goal (give more turns to struggling goals)
+- Goal instructions (tighten wording for failing criteria)
+- Persona tactics (change approach for specific borrower types)
+- Summarizer field priorities (reorder what gets kept vs dropped)
+- Opening lines
+- Rules (add specificity, never remove)
+
+OUTPUT FORMAT: JSON with these fields:
 {
-  "components_modified": ["agent1_prompt", "agent2_prompt", ...],
-  "changes": {
-    "agent1_prompt": "full new prompt text here",
-    ...
+  "strategy_changes": {
+    "agent1": {
+      "goals": [{"name": "goal_name", "priority": 2, "max_turns": 2, "instruction": "new text"}],
+      "persona_tactics": [{"persona_type": "combative", "approach": "new", "special_instructions": "new"}],
+      "rules": ["new rule to ADD"],
+      "opening_line": "new opening"
+    },
+    "agent2": { ... },
+    "agent3": { ... },
+    "summarizer": {
+      "fields": [{"name": "field_name", "priority": 1, "max_tokens": 40}]
+    }
   },
-  "rationale": "Why these changes, which patterns they address",
-  "failures_addressed": ["specific failure 1", "specific failure 2"]
+  "rationale": "Why these changes",
+  "failures_addressed": ["specific failure 1", ...]
 }
 
 RULES:
-- You may modify: agent1_prompt, agent2_prompt, agent3_prompt, summarizer_prompt
-- You may modify MULTIPLE components if the diagnosis warrants it
-- You CANNOT modify: rubrics, scoring weights, compliance rules
-- Token budgets: agent1 ≤ 2000 tokens, agent2/agent3 ≤ 1500 tokens
-- Preserve ALL compliance behaviors (AI disclosure, recording disclosure, etc.)
-- COMPLIANCE VIOLATIONS ARE THE TOP PRIORITY. If the analysis shows specific violations, fix those FIRST. Add explicit constraints to the prompt (e.g., "NEVER offer more than 12 months" or "ALWAYS identify as AI in first message")
-- Small targeted changes are better than complete rewrites
-- Address the SYSTEMATIC failures, not individual edge cases"""
+- Only include agents/fields you want to CHANGE (omit unchanged ones)
+- For goals: include the full goal object with the change, matched by name
+- COMPLIANCE VIOLATIONS ARE TOP PRIORITY — fix those FIRST
+- Token budgets: agent1 ≤ 2000 total, agent2/agent3 ≤ 1500 total
+- Each agent has 4-6 turns MAX. Prioritize goals that matter most.
+- If a persona type consistently fails: adjust that persona's tactic
+- If summarizer drops critical info: increase that field's priority"""
 
 
 def _build_rewriter_prompt(
@@ -109,29 +127,47 @@ def _build_rewriter_prompt(
 ) -> str:
     """Build the full prompt for the rewriter."""
     ac = parent.variant_config.agent_config
+    import json as _json
 
-    parts = [
-        format_trajectory_for_rewriter(trajectory),
-        "\n## CURRENT PROMPTS\n",
-        f"### Agent 1 (Assessment) [{count_tokens(ac.agent1_prompt)} tokens / {settings.tokens.agent1_prompt} limit]",
-        ac.agent1_prompt,
-        f"\n### Agent 2 (Resolution) [{count_tokens(ac.agent2_prompt)} tokens / {settings.tokens.agent2_prompt} limit]",
-        ac.agent2_prompt,
-        f"\n### Agent 3 (Final Notice) [{count_tokens(ac.agent3_prompt)} tokens / {settings.tokens.agent3_prompt} limit]",
-        ac.agent3_prompt,
-        f"\n### Summarizer [{count_tokens(ac.summarizer_prompt)} tokens]",
-        ac.summarizer_prompt,
-    ]
+    parts = [format_trajectory_for_rewriter(trajectory)]
+
+    # Show current strategy if available
+    if ac.strategy_json:
+        try:
+            from agents.strategy import PipelineStrategy
+            strategy = PipelineStrategy.model_validate_json(ac.strategy_json)
+            parts.append("\n## CURRENT STRATEGY\n")
+            for name, agent in [("agent1", strategy.agent1), ("agent2", strategy.agent2), ("agent3", strategy.agent3)]:
+                parts.append(f"### {name} ({agent.agent_name})")
+                parts.append(f"  Tone: {agent.tone}")
+                parts.append(f"  Goals (priority order):")
+                for g in sorted(agent.goals, key=lambda g: g.priority):
+                    parts.append(f"    {g.priority}. {g.name}: max_turns={g.max_turns}, instruction=\"{g.instruction[:80]}\"")
+                parts.append(f"  Persona tactics:")
+                for t in agent.persona_tactics:
+                    parts.append(f"    {t.persona_type}: {t.approach} — {t.special_instructions[:60]}")
+                parts.append("")
+            parts.append("### Summarizer fields (priority order):")
+            for f in sorted(strategy.summarizer.fields, key=lambda f: f.priority):
+                parts.append(f"    {f.priority}. {f.name}: max_tokens={f.max_tokens}")
+        except Exception:
+            parts.append("\n## CURRENT PROMPTS (no structured strategy available)\n")
+            parts.append(ac.agent1_prompt[:500])
+    else:
+        parts.append("\n## CURRENT PROMPTS\n")
+        parts.append(f"Agent 1 [{count_tokens(ac.agent1_prompt)} tok]: {ac.agent1_prompt[:300]}")
+        parts.append(f"Agent 2 [{count_tokens(ac.agent2_prompt)} tok]: {ac.agent2_prompt[:300]}")
+        parts.append(f"Agent 3 [{count_tokens(ac.agent3_prompt)} tok]: {ac.agent3_prompt[:300]}")
 
     if recent_mutations:
-        parts.append("\n## RECENT MUTATIONS (avoid repeating these)")
+        parts.append("\n## RECENT MUTATIONS (avoid repeating)")
         for m in recent_mutations[-3:]:
             parts.append(f"  - {m}")
 
     parts.append(
         "\n## TASK"
-        "\nAnalyze the performance data above. Identify the most impactful"
-        " improvement(s) and output your proposed changes as JSON."
+        "\nAnalyze the performance data. Propose targeted strategy mutations as JSON."
+        "\nFocus on the WORST-PERFORMING criteria and personas."
     )
 
     return "\n".join(parts)
@@ -143,11 +179,7 @@ def _parse_mutation(
     settings: Settings,
 ) -> MutationResult:
     """
-    Parse the rewriter's response into a validated MutationResult.
-
-    Hard enforcement:
-    - Reject any non-prompt components
-    - Reject prompts that exceed token budgets
+    Parse the rewriter's strategy changes and apply them to produce new prompts.
     """
     # Parse JSON
     try:
@@ -156,65 +188,150 @@ def _parse_mutation(
         import re
         json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
         if json_match:
-            data = json.loads(json_match.group(1))
+            try:
+                data = json.loads(json_match.group(1))
+            except json.JSONDecodeError:
+                return _fallback_mutation()
         else:
-            # Try to find JSON object in text
             start = text.find('{')
             end = text.rfind('}')
             if start != -1 and end != -1:
-                data = json.loads(text[start:end+1])
+                try:
+                    data = json.loads(text[start:end+1])
+                except json.JSONDecodeError:
+                    return _fallback_mutation()
             else:
-                return _fallback_mutation(current_config)
+                return _fallback_mutation()
 
-    components = data.get("components_modified", [])
-    changes = data.get("changes", {})
     rationale = data.get("rationale", "No rationale provided")
     failures = data.get("failures_addressed", [])
+    strategy_changes = data.get("strategy_changes", {})
 
-    # --- Hard enforcement: reject non-prompt components ---
-    valid_components = []
-    valid_changes = {}
-    for comp in components:
-        if comp in MUTABLE_COMPONENTS and comp in changes:
-            valid_components.append(comp)
-            valid_changes[comp] = changes[comp]
+    if not strategy_changes:
+        # Fallback: check for old-format prompt changes
+        changes = data.get("changes", {})
+        if changes:
+            components = [k for k in changes if k in MUTABLE_COMPONENTS]
+            return MutationResult(
+                components_modified=components,
+                changes=changes,
+                rationale=rationale,
+                failures_addressed=failures if isinstance(failures, list) else [str(failures)],
+                token_counts={k: count_tokens(v) for k, v in changes.items() if k in MUTABLE_COMPONENTS},
+            )
+        return _fallback_mutation()
 
-    # --- Token budget enforcement ---
-    budget_map = {
-        "agent1_prompt": settings.tokens.agent1_prompt,
-        "agent2_prompt": settings.tokens.agent2_prompt,
-        "agent3_prompt": settings.tokens.agent3_prompt,
-        "summarizer_prompt": 500,  # Summarizer should be concise
+    # Apply strategy changes to parent strategy → generate new prompts
+    from agents.strategy import PipelineStrategy, strategy_to_prompt, summarizer_strategy_to_prompt
+
+    try:
+        if current_config.strategy_json:
+            strategy = PipelineStrategy.model_validate_json(current_config.strategy_json)
+        else:
+            from agents.strategy import get_seed_strategy
+            strategy = get_seed_strategy()
+    except Exception:
+        from agents.strategy import get_seed_strategy
+        strategy = get_seed_strategy()
+
+    # Apply mutations to strategy
+    modified_components = []
+    strategy_dict = strategy.model_dump()
+
+    for agent_key in ["agent1", "agent2", "agent3"]:
+        if agent_key in strategy_changes:
+            changes_for_agent = strategy_changes[agent_key]
+            _apply_agent_changes(strategy_dict[agent_key], changes_for_agent)
+            modified_components.append(f"{agent_key}_prompt")
+
+    if "summarizer" in strategy_changes:
+        _apply_summarizer_changes(strategy_dict["summarizer"], strategy_changes["summarizer"])
+        modified_components.append("summarizer_prompt")
+
+    if not modified_components:
+        return _fallback_mutation()
+
+    # Rebuild strategy and generate prompts
+    new_strategy = PipelineStrategy.model_validate(strategy_dict)
+    new_prompts = {
+        "agent1_prompt": strategy_to_prompt(new_strategy.agent1, is_first_agent=True),
+        "agent2_prompt": strategy_to_prompt(new_strategy.agent2, is_first_agent=False),
+        "agent3_prompt": strategy_to_prompt(new_strategy.agent3, is_first_agent=False),
+        "summarizer_prompt": summarizer_strategy_to_prompt(new_strategy.summarizer),
+        "strategy_json": new_strategy.model_dump_json(),
     }
 
+    # Token budget check
+    budget_map = {"agent1_prompt": 2000, "agent2_prompt": 1500, "agent3_prompt": 1500, "summarizer_prompt": 500}
     token_counts = {}
-    final_components = []
-    final_changes = {}
-
-    for comp, new_text in valid_changes.items():
-        tokens = count_tokens(new_text)
-        budget = budget_map.get(comp, 2000)
-        token_counts[comp] = tokens
-
-        if tokens <= budget:
-            final_components.append(comp)
-            final_changes[comp] = new_text
-        # Silently drop over-budget components
-
-    if not final_components:
-        return _fallback_mutation(current_config)
+    for comp in modified_components:
+        if comp in new_prompts:
+            tokens = count_tokens(new_prompts[comp])
+            token_counts[comp] = tokens
+            if comp in budget_map and tokens > budget_map[comp]:
+                return _fallback_mutation()
 
     return MutationResult(
-        components_modified=final_components,
-        changes=final_changes,
+        components_modified=modified_components,
+        changes=new_prompts,
         rationale=rationale,
         failures_addressed=failures if isinstance(failures, list) else [str(failures)],
         token_counts=token_counts,
     )
 
 
-def _fallback_mutation(current_config: AgentConfig) -> MutationResult:
-    """Return a no-op mutation if parsing fails."""
+def _apply_agent_changes(agent_dict: dict, changes: dict) -> None:
+    """Apply changes to an agent strategy dict in place."""
+    # Update goals by name
+    if "goals" in changes:
+        existing_goals = {g["name"]: g for g in agent_dict.get("goals", [])}
+        for goal_change in changes["goals"]:
+            name = goal_change.get("name", "")
+            if name in existing_goals:
+                existing_goals[name].update(goal_change)
+            else:
+                agent_dict.setdefault("goals", []).append(goal_change)
+        agent_dict["goals"] = list(existing_goals.values())
+
+    # Update persona tactics by type
+    if "persona_tactics" in changes:
+        existing_tactics = {t["persona_type"]: t for t in agent_dict.get("persona_tactics", [])}
+        for tactic_change in changes["persona_tactics"]:
+            pt = tactic_change.get("persona_type", "")
+            if pt in existing_tactics:
+                existing_tactics[pt].update(tactic_change)
+            else:
+                agent_dict.setdefault("persona_tactics", []).append(tactic_change)
+        agent_dict["persona_tactics"] = list(existing_tactics.values())
+
+    # Add rules (append only, never remove)
+    if "rules" in changes:
+        existing_rules = set(agent_dict.get("rules", []))
+        for rule in changes["rules"]:
+            if rule not in existing_rules:
+                agent_dict.setdefault("rules", []).append(rule)
+
+    # Update simple fields
+    for key in ["opening_line", "tone", "role_description"]:
+        if key in changes:
+            agent_dict[key] = changes[key]
+
+
+def _apply_summarizer_changes(summarizer_dict: dict, changes: dict) -> None:
+    """Apply changes to summarizer strategy dict in place."""
+    if "fields" in changes:
+        existing_fields = {f["name"]: f for f in summarizer_dict.get("fields", [])}
+        for field_change in changes["fields"]:
+            name = field_change.get("name", "")
+            if name in existing_fields:
+                existing_fields[name].update(field_change)
+        summarizer_dict["fields"] = list(existing_fields.values())
+
+    if "compression_instruction" in changes:
+        summarizer_dict["compression_instruction"] = changes["compression_instruction"]
+
+
+def _fallback_mutation() -> MutationResult:
     return MutationResult(
         components_modified=[],
         changes={},
@@ -229,12 +346,7 @@ def apply_mutation(
     mutation: MutationResult,
     new_version_id: str,
 ) -> AgentConfig:
-    """
-    Apply a mutation to produce a new AgentConfig.
-
-    Only changes components listed in the mutation. All other prompts
-    carry forward from parent unchanged.
-    """
+    """Apply mutation to produce new AgentConfig. Prompts from mutation.changes."""
     changes = mutation.changes
     return AgentConfig(
         version_id=new_version_id,
@@ -242,4 +354,5 @@ def apply_mutation(
         agent2_prompt=changes.get("agent2_prompt", parent_config.agent2_prompt),
         agent3_prompt=changes.get("agent3_prompt", parent_config.agent3_prompt),
         summarizer_prompt=changes.get("summarizer_prompt", parent_config.summarizer_prompt),
+        strategy_json=changes.get("strategy_json", parent_config.strategy_json),
     )

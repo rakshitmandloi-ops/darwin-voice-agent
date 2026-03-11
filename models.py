@@ -82,14 +82,17 @@ class Transcript(BaseModel, frozen=True):
 
 class AgentConfig(BaseModel, frozen=True):
     """
-    Snapshot of all agent prompts + summarizer. This is what the evolution
-    loop mutates. Frozen so a given version is immutable once created.
+    Snapshot of all agent prompts + summarizer + strategy.
+    The strategy is the structured DNA. Prompts are generated from it.
+    Both are stored for audit trail.
     """
     version_id: str
     agent1_prompt: str
     agent2_prompt: str
     agent3_prompt: str
     summarizer_prompt: str
+    # Strategy JSON stored alongside prompts. Optional for backward compat.
+    strategy_json: str = ""
 
     def get_prompt(self, agent: AgentType) -> str:
         return {

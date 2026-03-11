@@ -180,10 +180,15 @@ Be concise. Every token counts — this summary has a hard 500-token budget."""
 
 
 def get_seed_prompts() -> dict[str, str]:
-    """Return the seed v0 prompts as a dict keyed by component name."""
+    """Return seed v0 prompts generated from strategy."""
+    from agents.strategy import get_seed_strategy, strategy_to_prompt, summarizer_strategy_to_prompt
+    import json
+
+    strategy = get_seed_strategy()
     return {
-        "agent1_prompt": AGENT1_PROMPT_V0,
-        "agent2_prompt": AGENT2_PROMPT_V0,
-        "agent3_prompt": AGENT3_PROMPT_V0,
-        "summarizer_prompt": SUMMARIZER_PROMPT_V0,
+        "agent1_prompt": strategy_to_prompt(strategy.agent1, is_first_agent=True),
+        "agent2_prompt": strategy_to_prompt(strategy.agent2, is_first_agent=False),
+        "agent3_prompt": strategy_to_prompt(strategy.agent3, is_first_agent=False),
+        "summarizer_prompt": summarizer_strategy_to_prompt(strategy.summarizer),
+        "strategy_json": strategy.model_dump_json(),
     }
