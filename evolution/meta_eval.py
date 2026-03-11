@@ -287,10 +287,6 @@ def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalC
     try:
         return EvalConfig(
             version_id=f"eval_v{result.generation}",
-            goal_rubric=current.goal_rubric,
-            quality_rubric=current.quality_rubric,
-            handoff_rubric=current.handoff_rubric,
-            system_rubric=current.system_rubric,
             compliance_rules=new_rules,
             scoring_weights=new_weights,
         )

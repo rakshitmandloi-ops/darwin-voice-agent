@@ -20,13 +20,7 @@ from typing import Any, Callable
 from agents.prompts import get_seed_prompts
 from config import Settings, get_settings
 from evaluation.cost_tracker import BudgetExhaustedError, CostTracker
-from evaluation.rubrics import (
-    DEFAULT_SCORING_WEIGHTS,
-    GOAL_RUBRIC_V0,
-    HANDOFF_RUBRIC_V0,
-    QUALITY_RUBRIC_V0,
-    SYSTEM_RUBRIC_V0,
-)
+from evaluation.rubrics import DEFAULT_SCORING_WEIGHTS
 from evaluation.scorers import score_conversation
 from evaluation.stats import check_persona_regression, paired_bootstrap
 from evaluation.strict_grader import strict_validate
@@ -66,18 +60,15 @@ async def run_evolution(
     archive = Archive(s)
 
     # Initialize eval config (fixed during evolution)
+    # Rubric text fields are no longer used — scorers use GOAL_CHECKS etc. directly
     eval_config = EvalConfig(
         version_id="eval_v0",
-        goal_rubric=GOAL_RUBRIC_V0,
-        quality_rubric=QUALITY_RUBRIC_V0,
-        handoff_rubric=HANDOFF_RUBRIC_V0,
-        system_rubric=SYSTEM_RUBRIC_V0,
         scoring_weights=DEFAULT_SCORING_WEIGHTS,
     )
 
     # Seed the archive if empty
     if archive.size == 0:
-        seed_entry = await _create_seed_entry(eval_config, tracker, s)
+        seed_entry = await _create_seed_entry(eval_config, tracker, s, archive=archive)
         archive.add(seed_entry)
         logger.info(f"Seed v0: mean_score={seed_entry.mean_score:.2f}")
 
@@ -215,6 +206,7 @@ async def _create_seed_entry(
     eval_config: EvalConfig,
     tracker: CostTracker,
     settings: Settings,
+    archive: Archive | None = None,
 ) -> ArchiveEntry:
     """Create the initial v0 entry with seed prompts, evaluated on 5 conversations."""
     prompts = get_seed_prompts()
@@ -222,7 +214,7 @@ async def _create_seed_entry(
     vc = VariantConfig(agent_config=ac, eval_config=eval_config)
 
     # Run 5 conversations (1 per persona)
-    conversations = await _simulate_batch(vc, n_personas=5, runs_per=1, tracker=tracker, settings=settings, archive=None, seed_offset=0)
+    conversations = await _simulate_batch(vc, n_personas=5, runs_per=1, tracker=tracker, settings=settings, archive=archive, seed_offset=0)
     scores = await _evaluate_batch(conversations, eval_config, tracker, settings)
 
     return ArchiveEntry(

@@ -105,21 +105,14 @@ class AgentConfig(BaseModel, frozen=True):
 
 class EvalConfig(BaseModel, frozen=True):
     """
-    Evaluation methodology snapshot. Rubrics + weights + compliance rules.
+    Evaluation methodology snapshot. Weights + compliance rules.
+    Rubric criteria are defined in evaluation/rubrics.py as binary checklists.
     NEVER changed by the evolution loop — only by the meta-eval cycle.
-    Frozen so comparisons between parent/child use identical eval config.
     """
     version_id: str = "eval_v0"
-    goal_rubric: dict[str, str] = Field(
-        default_factory=dict,
-        description="Per-agent goal completion rubric text",
-    )
-    quality_rubric: str = ""
-    handoff_rubric: str = ""
-    system_rubric: str = ""
     compliance_rules: list[str] = Field(
         default_factory=list,
-        description="Append-only list of compliance rule definitions",
+        description="Append-only list of extra compliance rule definitions",
     )
     scoring_weights: dict[str, float] = Field(
         default_factory=lambda: {
