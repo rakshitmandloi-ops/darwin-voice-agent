@@ -83,12 +83,26 @@ class CostTracker:
         if temperature is None:
             temperature = self._settings.temperature.eval
 
-        response = await self._client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            **kwargs,
-        )
+        # Retry on timeout/transient errors
+        import asyncio as _asyncio
+        max_retries = 3
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                response = await self._client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    timeout=60.0,
+                    **kwargs,
+                )
+                break
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    await _asyncio.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    raise last_error
 
         # Extract token usage from response
         usage = response.usage

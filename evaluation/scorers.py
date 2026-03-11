@@ -259,29 +259,31 @@ async def _check_criterion(
     settings: Settings,
 ) -> bool:
     """Ask LLM: does this text satisfy this criterion? Returns True/False."""
-    response = await tracker.tracked_completion(
-        model=settings.models.eval,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You evaluate AI debt collection conversations against specific criteria. "
-                    "Answer with ONLY a JSON object: {\"pass\": true} or {\"pass\": false}. "
-                    "Be strict — if there's any doubt, fail it."
-                ),
-            },
-            {
-                "role": "user",
-                "content": f"CRITERION: {criterion}\n\nCONVERSATION ({context_label}):\n{text[:2000]}",
-            },
-        ],
-        category=CostCategory.EVALUATION,
-        temperature=0.0,
-        metadata={"criterion": criterion[:50], "context": context_label},
-    )
-
-    result_text = response.choices[0].message.content or ""
-    return _parse_bool(result_text)
+    try:
+        response = await tracker.tracked_completion(
+            model=settings.models.eval,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You evaluate AI debt collection conversations against specific criteria. "
+                        "Answer with ONLY a JSON object: {\"pass\": true} or {\"pass\": false}. "
+                        "Be strict — if there's any doubt, fail it."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"CRITERION: {criterion}\n\nCONVERSATION ({context_label}):\n{text[:2000]}",
+                },
+            ],
+            category=CostCategory.EVALUATION,
+            temperature=0.0,
+            metadata={"criterion": criterion[:50], "context": context_label},
+        )
+        result_text = response.choices[0].message.content or ""
+        return _parse_bool(result_text)
+    except Exception:
+        return False  # Default to fail on error — conservative
 
 
 def _parse_bool(text: str) -> bool:

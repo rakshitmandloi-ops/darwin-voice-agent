@@ -35,9 +35,11 @@ class Archive:
         self,
         settings: Settings | None = None,
         batch_id: str | None = None,
+        read_only: bool = False,
     ) -> None:
         self._settings = settings or get_settings()
         self._entries: dict[str, ArchiveEntry] = {}
+        self._read_only = read_only
 
         # Create or load batch
         if batch_id:
@@ -48,14 +50,14 @@ class Archive:
         self._batch_dir = self._settings.logs_dir / "runs" / self._batch_id
         self._batch_dir.mkdir(parents=True, exist_ok=True)
 
-        # Also maintain a "current" symlink for dashboard
-        current_link = self._settings.logs_dir / "current_run"
-        # Remove old symlink if exists
-        if current_link.is_symlink() or current_link.exists():
-            current_link.unlink()
-        current_link.symlink_to(self._batch_dir)
+        if not read_only:
+            # Only update symlink and meta if we're the active writer
+            current_link = self._settings.logs_dir / "current_run"
+            if current_link.is_symlink() or current_link.exists():
+                current_link.unlink()
+            current_link.symlink_to(self._batch_dir)
+            self._save_meta()
 
-        self._save_meta()
         self._load_from_disk()
 
     @property

@@ -49,23 +49,37 @@ def cmd_evolve(args: argparse.Namespace) -> None:
 
 def cmd_status(args: argparse.Namespace) -> None:
     """Show archive summary and cost."""
+    import json
     from config import get_settings
     from evaluation.cost_tracker import CostTracker
-    from evolution.archive import Archive
+    from evolution.archive import Archive, list_batches
 
     s = get_settings()
-    archive = Archive(s)
+
+    # Read current archive directly without creating new batch
+    from models import ArchiveEntry
+    archive_file = s.logs_dir / "archive.json"
+    entries: dict[str, ArchiveEntry] = {}
+    if archive_file.exists():
+        with open(archive_file) as f:
+            data = json.load(f)
+        for vid, entry_data in data.items():
+            entries[vid] = ArchiveEntry.model_validate(entry_data)
     tracker = CostTracker(s)
 
-    if archive.size == 0:
+    if not entries:
         print("Archive is empty. Run 'python main.py evolve' first.")
         return
 
-    print(f"Archive: {archive.size} variants")
-    print(f"Best: {archive.get_best().version_id} (score={archive.get_best().mean_score:.2f})")
+    active = [e for e in entries.values() if not e.discarded]
+    best = max(active, key=lambda e: e.mean_score) if active else None
+
+    print(f"Archive: {len(entries)} variants")
+    if best:
+        print(f"Best: {best.version_id} (score={best.mean_score:.2f})")
     print()
 
-    for entry in sorted(archive.entries, key=lambda e: e.generation):
+    for entry in sorted(entries.values(), key=lambda e: e.generation):
         status = "PROMOTED" if entry.promoted else ("DISCARDED" if entry.discarded else "active")
         print(
             f"  {entry.version_id}: gen={entry.generation}, "
