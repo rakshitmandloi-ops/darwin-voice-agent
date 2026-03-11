@@ -33,15 +33,16 @@ async def rewrite(
     trajectory: TrajectoryAnalysis,
     tracker: CostTracker,
     recent_mutations: list[str] | None = None,
+    worst_conversations: list[dict] | None = None,
     settings: Settings | None = None,
 ) -> MutationResult:
     """
-    Propose a mutation to the parent's agent prompts/summarizer.
+    Propose a mutation to the parent's strategy.
 
     The rewriter sees:
-    1. Aggregate trajectory analysis (primary signal)
-    2. Current prompts
-    3. Token budget constraints
+    1. Aggregate trajectory analysis
+    2. Current strategy (structured parameters)
+    3. Worst conversation transcripts (actual messages that caused failures)
     4. Recent mutations (to avoid repeating)
 
     Returns a MutationResult with the proposed changes.
@@ -52,6 +53,7 @@ async def rewrite(
         parent=parent,
         trajectory=trajectory,
         recent_mutations=recent_mutations or [],
+        worst_conversations=worst_conversations or [],
         settings=s,
     )
 
@@ -123,6 +125,7 @@ def _build_rewriter_prompt(
     parent: ArchiveEntry,
     trajectory: TrajectoryAnalysis,
     recent_mutations: list[str],
+    worst_conversations: list[dict],
     settings: Settings,
 ) -> str:
     """Build the full prompt for the rewriter."""
@@ -159,6 +162,41 @@ def _build_rewriter_prompt(
         parts.append(f"Agent 2 [{count_tokens(ac.agent2_prompt)} tok]: {ac.agent2_prompt[:300]}")
         parts.append(f"Agent 3 [{count_tokens(ac.agent3_prompt)} tok]: {ac.agent3_prompt[:300]}")
 
+    # Include worst conversation transcripts so rewriter can see WHAT went wrong
+    if worst_conversations:
+        parts.append("\n## WORST CONVERSATIONS (actual transcripts showing failures)")
+        for i, conv in enumerate(worst_conversations[:3]):  # Max 3 to stay within context
+            persona = conv.get("persona_type", "?")
+            score = conv.get("total", 0)
+            parts.append(f"\n### Conversation {i+1}: {persona} (score: {score:.2f})")
+
+            # Show failing criteria for this conversation
+            failing = conv.get("failing_criteria", [])
+            if failing:
+                parts.append(f"  FAILING CRITERIA: {', '.join(failing)}")
+
+            # Show each agent's messages (truncated)
+            for stage, label in [("agent1", "Agent 1 (Assessment)"), ("agent2", "Agent 2 (Resolution)"), ("agent3", "Agent 3 (Final Notice)")]:
+                msgs = conv.get(stage, [])
+                if not msgs:
+                    continue
+                parts.append(f"\n  --- {label} ---")
+                for m in msgs[:8]:  # Max 8 messages per stage
+                    role = "AGENT" if m.get("role") == "assistant" else "BORROWER"
+                    content = m.get("content", "")[:200]  # Truncate long messages
+                    parts.append(f"  [{role}] {content}")
+
+            # Show handoff
+            h1 = conv.get("handoff_1")
+            if h1:
+                parts.append(f"\n  --- Handoff 1 ({h1.get('token_count', '?')} tok) ---")
+                parts.append(f"  {h1.get('text', '')[:200]}")
+
+            h2 = conv.get("handoff_2")
+            if h2:
+                parts.append(f"\n  --- Handoff 2 ({h2.get('token_count', '?')} tok) ---")
+                parts.append(f"  {h2.get('text', '')[:200]}")
+
     if recent_mutations:
         parts.append("\n## RECENT MUTATIONS (avoid repeating)")
         for m in recent_mutations[-3:]:
@@ -166,7 +204,8 @@ def _build_rewriter_prompt(
 
     parts.append(
         "\n## TASK"
-        "\nAnalyze the performance data. Propose targeted strategy mutations as JSON."
+        "\nAnalyze the performance data AND the actual conversation transcripts above."
+        "\nIdentify exactly what went wrong and propose targeted strategy mutations."
         "\nFocus on the WORST-PERFORMING criteria and personas."
     )
 

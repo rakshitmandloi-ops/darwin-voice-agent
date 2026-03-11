@@ -97,11 +97,16 @@ async def run_evolution(
             for parent_idx, parent in enumerate(parents):
                 archive.increment_children(parent.version_id)
 
-                # 2. Mutate
+                # 2. Mutate — include worst conversation transcripts
                 trajectory = analyze_trajectory(parent, archive.entries)
+
+                # Get worst conversations from archive transcripts
+                worst_convos = _get_worst_conversations(parent, archive)
+
                 mutation = await rewrite(
                     parent, trajectory, tracker,
                     recent_mutations=recent_mutations,
+                    worst_conversations=worst_convos,
                     settings=s,
                 )
 
@@ -201,6 +206,70 @@ async def run_evolution(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _get_worst_conversations(
+    parent: ArchiveEntry,
+    archive: Archive,
+) -> list[dict]:
+    """
+    Get the worst-scoring conversations for this parent variant,
+    with full transcripts loaded from archive storage.
+
+    Returns up to 3 worst conversations with transcripts + failing criteria.
+    """
+    if not parent.scores:
+        return []
+
+    # Sort by weighted_total, get worst 3
+    sorted_scores = sorted(parent.scores, key=lambda s: s.weighted_total)
+    worst = sorted_scores[:3]
+
+    result = []
+    for score in worst:
+        # Load transcript from archive
+        transcript = archive.get_transcript(score.conversation_id)
+        if not transcript:
+            continue
+
+        # Collect all failing criteria across agents
+        failing = []
+        for agent_key, agent_score in score.agent_scores.items():
+            for check_name, passed in agent_score.goal.checks.items():
+                if not passed:
+                    failing.append(f"{agent_key}/{check_name}")
+            for check_name, passed in agent_score.quality.checks.items():
+                if not passed:
+                    failing.append(f"{agent_key}/quality:{check_name}")
+            for rule, passed in agent_score.compliance.rule_results.items():
+                if not passed:
+                    failing.append(f"{agent_key}/compliance:{rule}")
+
+        # Handoff failures
+        for hk, hv in score.handoff_scores.items():
+            for check_name, passed in hv.checks.items():
+                if not passed:
+                    failing.append(f"{hk}/{check_name}")
+
+        # System failures
+        for check_name, passed in score.system_checks.checks.items():
+            if not passed:
+                failing.append(f"system/{check_name}")
+
+        conv_data = {
+            "conversation_id": score.conversation_id,
+            "persona_type": score.persona_type.value,
+            "total": score.weighted_total,
+            "failing_criteria": failing,
+            "agent1": transcript.get("agent1", []),
+            "agent2": transcript.get("agent2", []),
+            "agent3": transcript.get("agent3", []),
+            "handoff_1": transcript.get("handoff_1"),
+            "handoff_2": transcript.get("handoff_2"),
+        }
+        result.append(conv_data)
+
+    return result
+
 
 async def _create_seed_entry(
     eval_config: EvalConfig,
