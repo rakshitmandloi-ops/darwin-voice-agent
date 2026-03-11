@@ -65,7 +65,7 @@ class EvolutionConfig(BaseModel, frozen=True):
     max_generations: int = 15
     children_per_generation: int = 4
     success_threshold: float = 8.5
-    plateau_generations: int = 3
+    plateau_generations: int = 5
     confidence_level: float = 0.95
     bootstrap_n: int = 1000
 

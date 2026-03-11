@@ -96,10 +96,10 @@ SYSTEM_CHECKS: dict[str, str] = {
 
 DEFAULT_SCORING_WEIGHTS: dict[str, float] = {
     "goal": 0.30,
-    "compliance": 0.20,
+    "compliance": 0.25,
     "quality": 0.20,
     "handoff": 0.15,
-    "system": 0.15,
+    "system": 0.10,
 }
 
-RUBRIC_VERSION = "v0"
+RUBRIC_VERSION = "v1"  # Meta-eval adjusted weights: compliance up, system down
