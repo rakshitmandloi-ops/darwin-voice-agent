@@ -100,13 +100,13 @@ async def run_evolution(
 
             children: list[ArchiveEntry] = []
 
-            for parent_idx, parent in enumerate(parents):
+            # 2. Mutate ALL parents concurrently
+            import asyncio as _aio
+
+            async def _mutate_and_evaluate(parent_idx: int, parent: ArchiveEntry) -> ArchiveEntry | None:
                 archive.increment_children(parent.version_id)
 
-                # 2. Mutate — include worst conversation transcripts
                 trajectory = analyze_trajectory(parent, archive.entries)
-
-                # Get worst conversations from archive transcripts
                 worst_convos = _get_worst_conversations(parent, archive)
 
                 mutation = await rewrite(
@@ -118,7 +118,7 @@ async def run_evolution(
 
                 if not mutation.components_modified:
                     logger.info(f"  Parent {parent.version_id}: rewriter returned no changes, skipping")
-                    continue
+                    return None
 
                 recent_mutations.append(mutation.rationale[:100])
 
@@ -130,14 +130,13 @@ async def run_evolution(
                     child_version,
                 )
 
-                # Hard check: eval_config unchanged
                 child_vc = VariantConfig(
                     agent_config=child_ac,
                     eval_config=eval_config,
                 )
 
-                # 3. Staged simulation + full evaluation (accumulative)
-                child_entry = await _staged_evaluate(
+                # 3. Staged simulation + full evaluation
+                return await _staged_evaluate(
                     child_vc=child_vc,
                     parent=parent,
                     mutation=mutation,
@@ -148,8 +147,18 @@ async def run_evolution(
                     settings=s,
                 )
 
-                if child_entry is not None:
-                    children.append(child_entry)
+            # Run all children in parallel
+            tasks = [
+                _mutate_and_evaluate(idx, parent)
+                for idx, parent in enumerate(parents)
+            ]
+            results = await _aio.gather(*tasks, return_exceptions=True)
+
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.warning(f"  Child failed: {result}")
+                elif result is not None:
+                    children.append(result)
 
             # 4. Per-child promotion
             gen_promoted = False
