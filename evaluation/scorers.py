@@ -1,30 +1,38 @@
 """
-Evaluation scorers — rate conversations across multiple dimensions.
+Checklist-based evaluation scorers.
 
-Tier 1 (this file): Regular scorer using gpt-4o-mini. Runs on EVERY
-conversation with FULL rubric. Cheap enough to run at scale.
+Every criterion is a binary yes/no check evaluated by LLM.
+The LLM sees the transcript + one specific criterion and returns true/false.
 
-Tier 2 (strict_grader.py): Independent gpt-4o grader for promotion validation.
-
-Rubrics and weights are passed in (from EvalConfig), not hardcoded.
+This replaces vague 1-10 scores with clear, auditable pass/fail per criterion.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
-from typing import Any
 
 from config import Settings, get_settings
 from evaluation.compliance import check_compliance
 from evaluation.cost_tracker import CostTracker
+from evaluation.rubrics import (
+    DEFAULT_SCORING_WEIGHTS,
+    GOAL_CHECKS,
+    HANDOFF_CHECKS,
+    QUALITY_CHECKS,
+    SYSTEM_CHECKS,
+)
 from models import (
     AgentScores,
     AgentType,
+    ChecklistResult,
     Conversation,
     ConversationScores,
     CostCategory,
     EvalConfig,
+    HandoffChecklist,
     Outcome,
+    SystemChecklist,
 )
 
 
@@ -34,15 +42,10 @@ async def score_conversation(
     tracker: CostTracker,
     settings: Settings | None = None,
 ) -> ConversationScores:
-    """
-    Score a full pipeline conversation across all dimensions.
-
-    Returns ConversationScores with per-agent scores, handoff scores,
-    system score, and weighted total.
-    """
+    """Score a full pipeline conversation using binary checklists."""
     s = settings or get_settings()
 
-    # --- Per-agent scoring ---
+    # --- Per-agent scoring (goal + quality + compliance) ---
     agent_scores: dict[str, AgentScores] = {}
 
     agents_and_transcripts = [
@@ -51,103 +54,73 @@ async def score_conversation(
         (AgentType.FINAL_NOTICE, conversation.agent3_transcript),
     ]
 
+    agent_tasks = []
     for agent_type, transcript in agents_and_transcripts:
-        if not transcript.messages:
-            # Agent didn't run (e.g., deal_agreed before Agent 3)
-            agent_scores[agent_type.value] = AgentScores(
-                agent=agent_type,
-                goal=1.0,
-                quality=1.0,
-                compliance=check_compliance(transcript, agent_type),
-            )
-            continue
-
-        # Goal completion
-        goal_score = await _llm_score(
-            prompt=_build_goal_prompt(
-                transcript=transcript,
-                agent_type=agent_type,
-                rubric=eval_config.goal_rubric.get(agent_type.value, ""),
-            ),
-            tracker=tracker,
-            settings=s,
+        agent_tasks.append(
+            _score_agent(agent_type, transcript, tracker, s)
         )
 
-        # Quality
-        quality_score = await _llm_score(
-            prompt=_build_quality_prompt(
-                transcript=transcript,
-                agent_type=agent_type,
-                rubric=eval_config.quality_rubric,
-            ),
-            tracker=tracker,
-            settings=s,
-        )
-
-        # Compliance (rule-based, not LLM)
-        compliance = check_compliance(transcript, agent_type)
-
-        agent_scores[agent_type.value] = AgentScores(
-            agent=agent_type,
-            goal=goal_score,
-            quality=quality_score,
-            compliance=compliance,
-        )
+    agent_results = await asyncio.gather(*agent_tasks)
+    for agent_type, result in zip([a[0] for a in agents_and_transcripts], agent_results):
+        agent_scores[agent_type.value] = result
 
     # --- Handoff scoring ---
-    handoff_scores: dict[str, float] = {}
+    handoff_tasks = []
+    handoff_keys = []
 
-    if conversation.handoff_1:
-        handoff_scores["handoff_1"] = await _llm_score(
-            prompt=_build_handoff_prompt(
-                summary=conversation.handoff_1.text,
-                source_transcript=conversation.agent1_transcript,
-                target_transcript=conversation.agent2_transcript,
-                rubric=eval_config.handoff_rubric,
-            ),
-            tracker=tracker,
-            settings=s,
+    if conversation.handoff_1 and conversation.agent2_transcript.messages:
+        handoff_keys.append("handoff_1")
+        handoff_tasks.append(
+            _score_handoff(
+                conversation.handoff_1.text,
+                conversation.agent1_transcript.text,
+                conversation.agent2_transcript.text,
+                tracker, s,
+            )
         )
-    else:
-        handoff_scores["handoff_1"] = 1.0
 
-    if conversation.handoff_2:
-        handoff_scores["handoff_2"] = await _llm_score(
-            prompt=_build_handoff_prompt(
-                summary=conversation.handoff_2.text,
-                source_transcript=conversation.agent2_transcript,
-                target_transcript=conversation.agent3_transcript,
-                rubric=eval_config.handoff_rubric,
-            ),
-            tracker=tracker,
-            settings=s,
+    if conversation.handoff_2 and conversation.agent3_transcript.messages:
+        handoff_keys.append("handoff_2")
+        handoff_tasks.append(
+            _score_handoff(
+                conversation.handoff_2.text,
+                conversation.agent2_transcript.text,
+                conversation.agent3_transcript.text,
+                tracker, s,
+            )
         )
-    else:
-        handoff_scores["handoff_2"] = 1.0
 
-    # --- System-level scoring (cross-agent continuity) ---
-    system_score = await _llm_score(
-        prompt=_build_system_prompt(conversation, eval_config.system_rubric),
-        tracker=tracker,
-        settings=s,
-    )
+    handoff_results = await asyncio.gather(*handoff_tasks) if handoff_tasks else []
+    handoff_scores: dict[str, HandoffChecklist] = {}
+    for key, result in zip(handoff_keys, handoff_results):
+        handoff_scores[key] = result
+
+    # Fill missing handoffs
+    empty_handoff = HandoffChecklist(checks={k: False for k in HANDOFF_CHECKS})
+    if "handoff_1" not in handoff_scores:
+        handoff_scores["handoff_1"] = empty_handoff
+    if "handoff_2" not in handoff_scores:
+        handoff_scores["handoff_2"] = empty_handoff
+
+    # --- System continuity ---
+    system_checks = await _score_system(conversation, tracker, s)
 
     # --- Weighted total ---
     weights = eval_config.scoring_weights
-    avg_goal = _mean([s.goal for s in agent_scores.values()])
-    avg_quality = _mean([s.quality for s in agent_scores.values()])
-    compliance_score = 10.0 if all(s.compliance.all_passed for s in agent_scores.values()) else 1.0
-    avg_handoff = _mean(list(handoff_scores.values()))
+    avg_goal = _mean([a.goal_score for a in agent_scores.values()])
+    avg_quality = _mean([a.quality_score for a in agent_scores.values()])
+    compliance_score = 10.0 if all(a.compliance.all_passed for a in agent_scores.values()) else 1.0
+    avg_handoff = _mean([h.score for h in handoff_scores.values()])
+    sys_score = system_checks.score
 
     weighted_total = (
         weights.get("goal", 0.3) * avg_goal
         + weights.get("compliance", 0.2) * compliance_score
         + weights.get("quality", 0.2) * avg_quality
         + weights.get("handoff", 0.15) * avg_handoff
-        + weights.get("system", 0.15) * system_score
+        + weights.get("system", 0.15) * sys_score
     )
 
-    # --- Resolution rate ---
     resolved = 1.0 if conversation.outcome in (Outcome.DEAL_AGREED, Outcome.HARDSHIP_REFERRAL) else 0.0
 
     return ConversationScores(
@@ -155,129 +128,172 @@ async def score_conversation(
         persona_type=conversation.persona.persona_type,
         agent_scores=agent_scores,
         handoff_scores=handoff_scores,
-        system_score=system_score,
+        system_checks=system_checks,
         weighted_total=round(weighted_total, 2),
         resolution_rate=resolved,
     )
 
 
 # ---------------------------------------------------------------------------
-# LLM scoring helper
+# Per-agent scoring
 # ---------------------------------------------------------------------------
 
-async def _llm_score(
-    *,
-    prompt: str,
+async def _score_agent(
+    agent_type: AgentType,
+    transcript: "Transcript",
     tracker: CostTracker,
     settings: Settings,
-) -> float:
-    """Call LLM to get a 1-10 score. Returns the numeric score."""
+) -> AgentScores:
+    """Score one agent: goal checklist + quality checklist + compliance."""
+    from models import Transcript
+
+    if not transcript.messages:
+        empty_goal = ChecklistResult(checks={k: False for k in GOAL_CHECKS.get(agent_type.value, {})})
+        empty_quality = ChecklistResult(checks={k: False for k in QUALITY_CHECKS})
+        return AgentScores(
+            agent=agent_type,
+            goal=empty_goal,
+            quality=empty_quality,
+            compliance=check_compliance(transcript, agent_type),
+        )
+
+    text = transcript.text
+
+    # Score all goal + quality checks in parallel
+    goal_criteria = GOAL_CHECKS.get(agent_type.value, {})
+    quality_criteria = QUALITY_CHECKS
+
+    all_checks = []
+    all_keys = []
+    all_categories = []
+
+    for key, description in goal_criteria.items():
+        all_keys.append(key)
+        all_categories.append("goal")
+        all_checks.append(
+            _check_criterion(text, description, agent_type.value, tracker, settings)
+        )
+
+    for key, description in quality_criteria.items():
+        all_keys.append(key)
+        all_categories.append("quality")
+        all_checks.append(
+            _check_criterion(text, description, agent_type.value, tracker, settings)
+        )
+
+    results = await asyncio.gather(*all_checks)
+
+    goal_results = {}
+    quality_results = {}
+    for key, category, result in zip(all_keys, all_categories, results):
+        if category == "goal":
+            goal_results[key] = result
+        else:
+            quality_results[key] = result
+
+    return AgentScores(
+        agent=agent_type,
+        goal=ChecklistResult(checks=goal_results),
+        quality=ChecklistResult(checks=quality_results),
+        compliance=check_compliance(transcript, agent_type),
+    )
+
+
+async def _score_handoff(
+    summary: str,
+    source_text: str,
+    target_text: str,
+    tracker: CostTracker,
+    settings: Settings,
+) -> HandoffChecklist:
+    """Score handoff using checklist."""
+    context = f"HANDOFF SUMMARY:\n{summary}\n\nSOURCE CONVERSATION:\n{source_text[:800]}\n\nTARGET CONVERSATION:\n{target_text[:800]}"
+
+    tasks = []
+    keys = []
+    for key, description in HANDOFF_CHECKS.items():
+        keys.append(key)
+        tasks.append(
+            _check_criterion(context, description, "handoff", tracker, settings)
+        )
+
+    results = await asyncio.gather(*tasks)
+    return HandoffChecklist(checks=dict(zip(keys, results)))
+
+
+async def _score_system(
+    conversation: Conversation,
+    tracker: CostTracker,
+    settings: Settings,
+) -> SystemChecklist:
+    """Score system-level continuity using checklist."""
+    parts = ["FULL CONVERSATION:\n"]
+    parts.append("--- Agent 1 (Assessment/Chat) ---\n" + conversation.agent1_transcript.text[:600])
+    if conversation.agent2_transcript.messages:
+        parts.append("\n--- Agent 2 (Resolution/Voice) ---\n" + conversation.agent2_transcript.text[:600])
+    if conversation.agent3_transcript.messages:
+        parts.append("\n--- Agent 3 (Final Notice/Chat) ---\n" + conversation.agent3_transcript.text[:600])
+    context = "\n".join(parts)
+
+    tasks = []
+    keys = []
+    for key, description in SYSTEM_CHECKS.items():
+        keys.append(key)
+        tasks.append(
+            _check_criterion(context, description, "system", tracker, settings)
+        )
+
+    results = await asyncio.gather(*tasks)
+    return SystemChecklist(checks=dict(zip(keys, results)))
+
+
+# ---------------------------------------------------------------------------
+# Single criterion check
+# ---------------------------------------------------------------------------
+
+async def _check_criterion(
+    text: str,
+    criterion: str,
+    context_label: str,
+    tracker: CostTracker,
+    settings: Settings,
+) -> bool:
+    """Ask LLM: does this text satisfy this criterion? Returns True/False."""
     response = await tracker.tracked_completion(
         model=settings.models.eval,
         messages=[
-            {"role": "system", "content": "You are an evaluation judge. Output ONLY a JSON object with a 'score' field (integer 1-10) and a brief 'reason' field. Example: {\"score\": 7, \"reason\": \"Good but missed X\"}"},
-            {"role": "user", "content": prompt},
+            {
+                "role": "system",
+                "content": (
+                    "You evaluate AI debt collection conversations against specific criteria. "
+                    "Answer with ONLY a JSON object: {\"pass\": true} or {\"pass\": false}. "
+                    "Be strict — if there's any doubt, fail it."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"CRITERION: {criterion}\n\nCONVERSATION ({context_label}):\n{text[:2000]}",
+            },
         ],
         category=CostCategory.EVALUATION,
         temperature=0.0,
+        metadata={"criterion": criterion[:50], "context": context_label},
     )
 
-    text = response.choices[0].message.content or ""
-    return _parse_score(text)
+    result_text = response.choices[0].message.content or ""
+    return _parse_bool(result_text)
 
 
-def _parse_score(text: str) -> float:
-    """Extract numeric score from LLM response. Handles JSON and plain text."""
-    # Try JSON first
+def _parse_bool(text: str) -> bool:
+    """Parse LLM response to boolean."""
     try:
         data = json.loads(text)
-        score = float(data.get("score", 5))
-        return max(1.0, min(10.0, score))
-    except (json.JSONDecodeError, TypeError, ValueError):
-        pass
-
-    # Fallback: find first number in text
-    import re
-    match = re.search(r'\b(\d+(?:\.\d+)?)\b', text)
-    if match:
-        score = float(match.group(1))
-        return max(1.0, min(10.0, score))
-
-    return 5.0  # Default if parsing fails
-
-
-# ---------------------------------------------------------------------------
-# Prompt builders
-# ---------------------------------------------------------------------------
-
-def _build_goal_prompt(
-    transcript: Transcript,
-    agent_type: AgentType,
-    rubric: str,
-) -> str:
-    from models import Transcript
-    return f"""{rubric}
-
-AGENT TYPE: {agent_type.value}
-CONVERSATION:
-{transcript.text}
-
-Rate this agent's goal completion (1-10):"""
-
-
-def _build_quality_prompt(
-    transcript: Transcript,
-    agent_type: AgentType,
-    rubric: str,
-) -> str:
-    from models import Transcript
-    return f"""{rubric}
-
-AGENT TYPE: {agent_type.value} ({"cold/clinical" if agent_type == AgentType.ASSESSMENT else "transactional" if agent_type == AgentType.RESOLUTION else "consequence-driven"})
-CONVERSATION:
-{transcript.text}
-
-Rate this agent's conversation quality (1-10):"""
-
-
-def _build_handoff_prompt(
-    summary: str,
-    source_transcript: Transcript,
-    target_transcript: Transcript,
-    rubric: str,
-) -> str:
-    from models import Transcript
-    target_text = target_transcript.text if target_transcript.messages else "(agent did not run)"
-    return f"""{rubric}
-
-HANDOFF SUMMARY:
-{summary}
-
-SOURCE CONVERSATION (what the summary was built from):
-{source_transcript.text[:1000]}
-
-TARGET CONVERSATION (did the next agent use the summary?):
-{target_text[:1000]}
-
-Rate this handoff quality (1-10):"""
-
-
-def _build_system_prompt(conversation: Conversation, rubric: str) -> str:
-    parts = [rubric, "\nFULL CONVERSATION ACROSS ALL AGENTS:\n"]
-
-    parts.append("--- AGENT 1 (Assessment/Chat) ---")
-    parts.append(conversation.agent1_transcript.text[:800])
-
-    if conversation.agent2_transcript.messages:
-        parts.append("\n--- AGENT 2 (Resolution/Voice) ---")
-        parts.append(conversation.agent2_transcript.text[:800])
-
-    if conversation.agent3_transcript.messages:
-        parts.append("\n--- AGENT 3 (Final Notice/Chat) ---")
-        parts.append(conversation.agent3_transcript.text[:800])
-
-    parts.append("\nRate the end-to-end continuity (1-10):")
-    return "\n".join(parts)
+        return bool(data.get("pass", False))
+    except (json.JSONDecodeError, TypeError):
+        lower = text.lower().strip()
+        if "true" in lower or '"pass": true' in lower:
+            return True
+        return False
 
 
 def _mean(values: list[float]) -> float:

@@ -96,6 +96,7 @@ RULES:
 - You CANNOT modify: rubrics, scoring weights, compliance rules
 - Token budgets: agent1 ≤ 2000 tokens, agent2/agent3 ≤ 1500 tokens
 - Preserve ALL compliance behaviors (AI disclosure, recording disclosure, etc.)
+- COMPLIANCE VIOLATIONS ARE THE TOP PRIORITY. If the analysis shows specific violations, fix those FIRST. Add explicit constraints to the prompt (e.g., "NEVER offer more than 12 months" or "ALWAYS identify as AI in first message")
 - Small targeted changes are better than complete rewrites
 - Address the SYSTEMATIC failures, not individual edge cases"""
 

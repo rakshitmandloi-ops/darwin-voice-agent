@@ -206,23 +206,81 @@ class ComplianceResult(BaseModel, frozen=True):
         return [r for r, passed in self.rule_results.items() if not passed]
 
 
+class ChecklistResult(BaseModel, frozen=True):
+    """Binary pass/fail checklist — same pattern for goal, quality, compliance."""
+    checks: dict[str, bool]   # criterion_name → pass/fail
+
+    @property
+    def all_passed(self) -> bool:
+        return all(self.checks.values())
+
+    @property
+    def pass_rate(self) -> float:
+        if not self.checks:
+            return 0.0
+        return sum(self.checks.values()) / len(self.checks)
+
+    @property
+    def failures(self) -> list[str]:
+        return [c for c, passed in self.checks.items() if not passed]
+
+    @property
+    def score(self) -> float:
+        """Convert to 1-10 scale for backward compat."""
+        return 1.0 + self.pass_rate * 9.0
+
+
 class AgentScores(BaseModel, frozen=True):
     """Scores for a single agent within a conversation."""
     agent: AgentType
-    goal: float = Field(ge=1.0, le=10.0)
-    quality: float = Field(ge=1.0, le=10.0)
-    compliance: ComplianceResult
+    goal: ChecklistResult         # per-criterion pass/fail
+    quality: ChecklistResult      # per-criterion pass/fail
+    compliance: ComplianceResult  # per-rule pass/fail (kept separate for backward compat)
+
+    @property
+    def goal_score(self) -> float:
+        return self.goal.score
+
+    @property
+    def quality_score(self) -> float:
+        return self.quality.score
+
+
+class HandoffChecklist(BaseModel, frozen=True):
+    """Checklist for handoff quality."""
+    checks: dict[str, bool]
+
+    @property
+    def score(self) -> float:
+        if not self.checks:
+            return 1.0
+        return 1.0 + (sum(self.checks.values()) / len(self.checks)) * 9.0
+
+
+class SystemChecklist(BaseModel, frozen=True):
+    """Checklist for cross-agent system continuity."""
+    checks: dict[str, bool]
+
+    @property
+    def score(self) -> float:
+        if not self.checks:
+            return 1.0
+        return 1.0 + (sum(self.checks.values()) / len(self.checks)) * 9.0
 
 
 class ConversationScores(BaseModel, frozen=True):
     """All scores for one full pipeline conversation."""
     conversation_id: str
-    persona_type: PersonaType = PersonaType.COOPERATIVE  # Track which scenario
-    agent_scores: dict[str, AgentScores]    # AgentType.value → scores
-    handoff_scores: dict[str, float]         # "handoff_1", "handoff_2" → score
-    system_score: float = Field(ge=1.0, le=10.0)
+    persona_type: PersonaType = PersonaType.COOPERATIVE
+    agent_scores: dict[str, AgentScores]
+    handoff_scores: dict[str, HandoffChecklist]
+    system_checks: SystemChecklist = Field(default_factory=lambda: SystemChecklist(checks={}))
     weighted_total: float
-    resolution_rate: float = Field(ge=0.0, le=1.0, description="1.0 if resolved, 0.0 if not")
+    resolution_rate: float = Field(ge=0.0, le=1.0)
+
+    @property
+    def system_score(self) -> float:
+        return self.system_checks.score
 
     @property
     def compliance_passed(self) -> bool:

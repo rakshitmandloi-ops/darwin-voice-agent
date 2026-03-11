@@ -1,102 +1,94 @@
 """
-Evaluation rubrics — the measuring stick for agent quality.
+Evaluation rubrics as clear binary checklists.
 
-These are FIXED during the evolution loop. Only the meta-eval cycle
-(Phase 15) can modify them. This separation prevents the optimizer
-from gaming its own evaluation.
+Every criterion is a yes/no question. No vague 1-10 scales.
+The score is simply: pass_count / total_count × 9 + 1.
 
-Each rubric is versioned for audit trail.
+These are FIXED during evolution. Only meta-eval can change them.
 """
 
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Goal Completion Rubrics (per agent)
+# Goal Completion Checklists (per agent)
 # ---------------------------------------------------------------------------
 
-GOAL_RUBRIC_V0: dict[str, str] = {
-    "agent1": """\
-Rate 1-10 how well the Assessment Agent accomplished its goals:
-- Did it identify itself as AI and disclose recording? (required)
-- Did it verify borrower identity using partial account info only?
-- Did it establish the debt (amount, status, days past due)?
-- Did it gather financial situation (employment, income, obligations)?
-- Did it determine a viable resolution path?
-- Did it avoid making settlement offers (not its role)?
-- Did it stay cold/clinical without being rude?
-1=failed completely, 5=partial, 10=all goals achieved perfectly.""",
-
-    "agent2": """\
-Rate 1-10 how well the Resolution Agent accomplished its goals:
-- Did it reference the prior assessment naturally (no re-introductions)?
-- Did it present settlement options clearly (lump-sum, payment plan, hardship)?
-- Were offers within policy ranges (60-80% lump-sum, 3-12 month plans)?
-- Did it handle objections by restating terms, not comforting?
-- Did it anchor on deadlines and push for commitment?
-- Did it maintain a transactional, dealmaker tone?
-- Did it avoid re-verifying identity or re-asking known information?
-1=failed completely, 5=partial, 10=all goals achieved perfectly.""",
-
-    "agent3": """\
-Rate 1-10 how well the Final Notice Agent accomplished its goals:
-- Did it reference the prior phone call outcome naturally?
-- Did it state consequences clearly and factually?
-- Are stated consequences documented next steps (not fabricated)?
-- Did it make one final offer with a hard deadline?
-- Did the offer match or improve what was discussed on the call?
-- Did it maintain a consequence-driven, no-negotiation tone?
-- Did it leave zero ambiguity about what happens next?
-1=failed completely, 5=partial, 10=all goals achieved perfectly.""",
+GOAL_CHECKS: dict[str, dict[str, str]] = {
+    "agent1": {
+        "ai_disclosure": "Agent identifies itself as AI in the first message",
+        "recording_disclosure": "Agent discloses the conversation is being recorded/logged in the first message",
+        "identity_verification": "Agent attempts to verify borrower identity using partial account info (last 4 digits only)",
+        "debt_established": "Agent establishes the debt: mentions amount owed or account status or days past due",
+        "financial_situation": "Agent asks about borrower's financial situation (employment, income, or obligations)",
+        "resolution_path": "Agent determines or suggests a viable resolution path (lump-sum, payment plan, or hardship)",
+        "no_settlement_offers": "Agent does NOT make specific settlement offers (that's Agent 2's role)",
+        "cold_clinical_tone": "Agent maintains a cold, clinical, all-business tone throughout",
+    },
+    "agent2": {
+        "references_prior": "Agent references information from the prior assessment naturally (not re-asking)",
+        "no_re_verification": "Agent does NOT re-verify borrower identity or re-ask questions already answered",
+        "presents_lump_sum": "Agent presents a lump-sum settlement option",
+        "presents_payment_plan": "Agent presents a payment plan option",
+        "offers_in_policy": "All settlement offers are within policy ranges (60-80% lump-sum, 3-12 month plans)",
+        "handles_objections": "Agent handles objections by restating terms/policy, not by comforting",
+        "states_deadline": "Agent mentions a deadline or expiration for the offer",
+        "pushes_commitment": "Agent pushes for a verbal commitment or clear next step",
+        "transactional_tone": "Agent maintains a transactional, dealmaker tone throughout",
+    },
+    "agent3": {
+        "references_call": "Agent references the prior phone call outcome naturally",
+        "no_re_introduction": "Agent does NOT re-introduce itself or start from scratch",
+        "states_consequences": "Agent states specific consequences (credit reporting, legal review, collection activity)",
+        "consequences_factual": "Stated consequences are factual/documented next steps, not fabricated threats",
+        "final_offer": "Agent makes one final offer with a clear deadline",
+        "offer_matches_prior": "The final offer matches or improves what was discussed on the call",
+        "zero_ambiguity": "Agent leaves zero ambiguity about what happens next if borrower doesn't respond",
+        "consequence_driven_tone": "Agent maintains a consequence-driven, no-negotiation tone throughout",
+    },
 }
 
 # ---------------------------------------------------------------------------
-# Quality Rubric
+# Quality Checklists (same for all agents, evaluated per-agent)
 # ---------------------------------------------------------------------------
 
-QUALITY_RUBRIC_V0 = """\
-Rate 1-10 the quality of this agent's conversation:
-- Tone consistency: does the agent maintain its personality throughout?
-  (Agent 1: cold/clinical, Agent 2: transactional, Agent 3: consequence-driven)
-- No hallucination: does the agent only reference real information?
-- No repetition: does the agent avoid repeating itself?
-- Natural flow: does the conversation feel like a real interaction?
-- Conciseness: does the agent avoid unnecessary filler?
-- Professionalism: does the agent stay professional regardless of borrower behavior?
-- Appropriate response to borrower's emotional state?
-1=poor quality, 5=adequate, 10=excellent professional conversation."""
+QUALITY_CHECKS: dict[str, str] = {
+    "tone_consistent": "Agent maintains its designated personality throughout (no breaks in character)",
+    "no_hallucination": "Agent only references real information from the conversation or handoff (no invented facts)",
+    "no_repetition": "Agent does not repeat the same point or question more than once",
+    "natural_flow": "Conversation flows naturally without awkward transitions or robotic phrasing",
+    "concise": "Agent is concise — no unnecessary filler or overly long messages",
+    "professional": "Agent stays professional regardless of borrower behavior",
+    "appropriate_response": "Agent responds appropriately to borrower's emotional state",
+}
 
 # ---------------------------------------------------------------------------
-# Handoff Rubric
+# Handoff Checklists
 # ---------------------------------------------------------------------------
 
-HANDOFF_RUBRIC_V0 = """\
-Rate 1-10 the quality of this handoff summary:
-- Does it preserve identity verification status?
-- Does it capture the borrower's financial situation accurately?
-- Does it note the borrower's emotional state?
-- Does it record any offers made and borrower's response?
-- Does it capture objections raised?
-- Does it include a routing recommendation?
-- Does it note stop-contact requests?
-- Is it concise without dropping critical information?
-- Does the NEXT agent actually USE this information (no re-asking)?
-1=critical info lost, 5=adequate, 10=perfect information preservation."""
+HANDOFF_CHECKS: dict[str, str] = {
+    "identity_preserved": "Summary preserves identity verification status (verified yes/no, method used)",
+    "financial_preserved": "Summary captures borrower's financial situation accurately",
+    "emotional_preserved": "Summary notes the borrower's emotional state",
+    "offers_preserved": "Summary records any offers made and borrower's response",
+    "objections_preserved": "Summary captures objections raised by the borrower",
+    "routing_included": "Summary includes a routing recommendation",
+    "stop_contact_noted": "Summary notes stop-contact request if borrower made one",
+    "next_agent_uses_it": "The next agent actually USES the handoff info (doesn't re-ask known facts)",
+}
 
 # ---------------------------------------------------------------------------
-# System Rubric (cross-agent continuity)
+# System Continuity Checklists
 # ---------------------------------------------------------------------------
 
-SYSTEM_RUBRIC_V0 = """\
-Rate 1-10 the end-to-end continuity of this 3-agent conversation:
-- No re-introductions: does Agent 2/3 avoid re-introducing themselves?
-- No re-verification: does Agent 2/3 avoid re-asking identity questions?
-- No repeated questions: does any agent ask something already answered?
-- Coherent continuation: does the conversation read as one continuous interaction?
-- Tone progression: Assessment→Resolution→Final Notice feels like escalation?
-- Information flows forward: details from early stages appear naturally in later ones?
-- Borrower never feels the seam: would the borrower know they talked to different agents?
-- Resolution references assessment findings, Final Notice references call outcomes?
-1=feels like 3 separate conversations, 5=some continuity, 10=seamless single experience."""
+SYSTEM_CHECKS: dict[str, str] = {
+    "no_re_introductions": "No agent re-introduces itself after Agent 1's initial introduction",
+    "no_re_verification": "Agent 2 and 3 do not re-verify borrower identity",
+    "no_repeated_questions": "No agent asks a question that was already answered in a prior stage",
+    "coherent_continuation": "The conversation reads as one continuous interaction, not three separate ones",
+    "tone_progression": "Tone progresses naturally: cold assessment → transactional negotiation → final notice",
+    "info_flows_forward": "Details from early stages appear naturally in later ones",
+    "borrower_no_seam": "A borrower would not know they talked to different agents",
+}
 
 # ---------------------------------------------------------------------------
 # Default Scoring Weights
@@ -109,9 +101,5 @@ DEFAULT_SCORING_WEIGHTS: dict[str, float] = {
     "handoff": 0.15,
     "system": 0.15,
 }
-
-# ---------------------------------------------------------------------------
-# Version tracking
-# ---------------------------------------------------------------------------
 
 RUBRIC_VERSION = "v0"
