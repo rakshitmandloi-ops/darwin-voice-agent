@@ -29,6 +29,15 @@ from models import (
 )
 
 
+def _count_messages_tokens(messages: list[dict[str, str]]) -> int:
+    """Count total tokens across all messages in an OpenAI message list."""
+    total = 0
+    for msg in messages:
+        # ~4 tokens overhead per message for role + formatting
+        total += count_tokens(msg["content"]) + 4
+    return total
+
+
 async def _run_agent_conversation(
     *,
     agent_type: AgentType,
@@ -43,11 +52,12 @@ async def _run_agent_conversation(
     """
     Run a multi-turn conversation between an agent and a simulated borrower.
 
-    The agent uses `system_prompt` + optional `handoff_context`.
-    The borrower uses the persona's system prompt (chat or voice variant).
+    HARD CONSTRAINT: Total tokens (system prompt + handoff + all conversation
+    messages) must stay within 2000 tokens. When approaching the limit,
+    the conversation ends — the agent must work within the budget.
 
-    Returns the full transcript (excluding system messages for cleanliness,
-    but the system prompt is counted in the token budget).
+    The borrower simulation uses a separate message list (not budget-constrained)
+    since the borrower is our test harness, not the deployed agent.
     """
     # --- Build agent messages ---
     agent_messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
@@ -58,33 +68,36 @@ async def _run_agent_conversation(
             "content": f"HANDOFF CONTEXT FROM PRIOR STAGE:\n{handoff_context}",
         })
 
-    # --- Build borrower messages ---
+    # --- Build borrower messages (separate, not budget-constrained) ---
     is_voice = agent_type == AgentType.RESOLUTION
     borrower_prompt = persona.voice_system_prompt if is_voice else persona.system_prompt
     borrower_messages: list[dict[str, str]] = [
         {"role": "system", "content": borrower_prompt},
     ]
 
-    # --- Token budget enforcement ---
-    prompt_budget = {
-        AgentType.ASSESSMENT: settings.tokens.agent1_prompt,
-        AgentType.RESOLUTION: settings.tokens.agent2_prompt,
-        AgentType.FINAL_NOTICE: settings.tokens.agent3_prompt,
-    }[agent_type]
+    # --- Token budget: track total agent-side tokens ---
+    total_budget = settings.tokens.max_agent  # 2000
+    base_tokens = _count_messages_tokens(agent_messages)
+    # Reserve ~150 tokens for the agent's next response
+    response_reserve = 150
 
     usage = enforce_budget(
         prompt=system_prompt,
         handoff=handoff_context,
-        limit=settings.tokens.max_agent,
+        limit=total_budget,
         agent_name=agent_type.value,
     )
     log_token_usage(usage, settings)
 
     # --- Conversation loop ---
     transcript_messages: list[Message] = []
+    current_tokens = base_tokens
 
-    # Agent speaks first
     for turn in range(max_turns):
+        # Check if we have budget for another turn
+        if current_tokens + response_reserve >= total_budget:
+            break
+
         # --- Agent turn ---
         agent_response = await tracker.tracked_completion(
             model=settings.models.sim,
@@ -94,18 +107,27 @@ async def _run_agent_conversation(
             metadata={"agent": agent_type.value, "turn": turn, "seed": seed},
         )
         agent_text = agent_response.choices[0].message.content or ""
+
+        # Track tokens
+        msg_tokens = count_tokens(agent_text) + 4
+        current_tokens += msg_tokens
+
         agent_messages.append({"role": "assistant", "content": agent_text})
         transcript_messages.append(Message(role="assistant", content=agent_text))
 
-        # Add agent message to borrower's view (as "user" from borrower's perspective)
+        # Add agent message to borrower's view
         borrower_messages.append({"role": "user", "content": agent_text})
 
-        # Check for conversation-ending signals from agent
+        # Check for conversation-ending signals
         if _is_conversation_ending(agent_text):
             break
 
+        # Check budget before borrower turn
+        if current_tokens + response_reserve >= total_budget:
+            break
+
         # --- Borrower turn ---
-        if turn < max_turns - 1:  # Don't generate borrower response on last turn
+        if turn < max_turns - 1:
             borrower_response = await tracker.tracked_completion(
                 model=settings.models.sim,
                 messages=borrower_messages,
@@ -114,15 +136,27 @@ async def _run_agent_conversation(
                 metadata={"persona": persona.name, "turn": turn, "seed": seed},
             )
             borrower_text = borrower_response.choices[0].message.content or ""
+
+            # Track tokens (borrower message goes into agent's context)
+            msg_tokens = count_tokens(borrower_text) + 4
+            current_tokens += msg_tokens
+
             borrower_messages.append({"role": "assistant", "content": borrower_text})
             transcript_messages.append(Message(role="user", content=borrower_text))
-
-            # Add borrower message to agent's view
             agent_messages.append({"role": "user", "content": borrower_text})
 
-            # Check for borrower ending signals
             if _borrower_wants_to_stop(borrower_text):
                 break
+
+    # Log final token usage
+    final_usage = {
+        "agent": agent_type.value,
+        "total_tokens_used": current_tokens,
+        "budget": total_budget,
+        "turns_completed": len([m for m in transcript_messages if m.role == "assistant"]),
+        "within_budget": current_tokens <= total_budget,
+    }
+    log_token_usage(final_usage, settings)
 
     return Transcript(messages=tuple(transcript_messages))
 
