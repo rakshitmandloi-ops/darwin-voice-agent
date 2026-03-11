@@ -4,9 +4,7 @@ Conversation simulator for the 3-agent debt collection pipeline.
 Runs agents against LLM-simulated borrowers. Each agent stage produces a
 transcript, which is summarized into a handoff for the next stage.
 
-Built incrementally:
-- Phase 1: Agent 1 only (this commit)
-- Phase 2: Full pipeline (Agent 1 → 2 → 3 with handoffs)
+Full pipeline: Agent 1 (chat) → summarize → Agent 2 (voice) → summarize → Agent 3 (chat)
 """
 
 from __future__ import annotations
@@ -17,11 +15,13 @@ from typing import Any
 from agents.prompts import count_tokens, enforce_budget, log_token_usage
 from config import Settings, get_settings
 from evaluation.cost_tracker import CostTracker
+from handoff.summarizer import summarize_for_handoff
 from models import (
     AgentConfig,
     AgentType,
     CostCategory,
     Conversation,
+    HandoffSummary,
     Message,
     Outcome,
     Persona,
@@ -190,6 +190,149 @@ def _determine_outcome(
 # Public API
 # ---------------------------------------------------------------------------
 
+async def simulate_pipeline(
+    *,
+    agent_config: AgentConfig,
+    persona: Persona,
+    seed: int,
+    tracker: CostTracker,
+    settings: Settings | None = None,
+) -> Conversation:
+    """
+    Run the full 3-agent pipeline as text simulation.
+
+    Agent 1 (Assessment/chat) → summarize → Agent 2 (Resolution/voice-simulated)
+    → summarize → Agent 3 (Final Notice/chat)
+
+    If the borrower requests stop-contact at any stage, subsequent stages
+    are skipped. The Conversation object captures the full state.
+    """
+    s = settings or get_settings()
+    conv_id = f"conv-{uuid.uuid4().hex[:8]}"
+
+    # ---- Stage 1: Assessment (Chat) ----
+    agent1_transcript = await _run_agent_conversation(
+        agent_type=AgentType.ASSESSMENT,
+        system_prompt=agent_config.agent1_prompt,
+        handoff_context=None,
+        persona=persona,
+        max_turns=s.simulation.conversation_turns,
+        tracker=tracker,
+        settings=s,
+        seed=seed,
+    )
+
+    # Check for early exit
+    stop_contact = _borrower_refused_in_transcript(agent1_transcript)
+    if stop_contact:
+        return Conversation(
+            conversation_id=conv_id,
+            persona=persona,
+            seed=seed,
+            agent1_transcript=agent1_transcript,
+            outcome=Outcome.BORROWER_REFUSED,
+            stop_contact=True,
+        )
+
+    # ---- Handoff 1: Agent 1 → Agent 2 ----
+    handoff_1 = await summarize_for_handoff(
+        transcript=agent1_transcript,
+        prior_summary=None,
+        summarizer_prompt=agent_config.summarizer_prompt,
+        source_agent=AgentType.ASSESSMENT,
+        target_agent=AgentType.RESOLUTION,
+        tracker=tracker,
+        settings=s,
+    )
+
+    # ---- Stage 2: Resolution (Voice-simulated) ----
+    agent2_transcript = await _run_agent_conversation(
+        agent_type=AgentType.RESOLUTION,
+        system_prompt=agent_config.agent2_prompt,
+        handoff_context=handoff_1.text,
+        persona=persona,
+        max_turns=s.simulation.conversation_turns,
+        tracker=tracker,
+        settings=s,
+        seed=seed,
+    )
+
+    # Check if deal agreed during Resolution — exit early
+    stage2_outcome = _determine_outcome(agent1_transcript, agent2_transcript)
+    if stage2_outcome == Outcome.DEAL_AGREED:
+        return Conversation(
+            conversation_id=conv_id,
+            persona=persona,
+            seed=seed,
+            agent1_transcript=agent1_transcript,
+            agent2_transcript=agent2_transcript,
+            handoff_1=handoff_1,
+            outcome=Outcome.DEAL_AGREED,
+            stop_contact=False,
+        )
+
+    stop_contact = _borrower_refused_in_transcript(agent2_transcript)
+    if stop_contact:
+        return Conversation(
+            conversation_id=conv_id,
+            persona=persona,
+            seed=seed,
+            agent1_transcript=agent1_transcript,
+            agent2_transcript=agent2_transcript,
+            handoff_1=handoff_1,
+            outcome=Outcome.BORROWER_REFUSED,
+            stop_contact=True,
+        )
+
+    # ---- Handoff 2: Agent 1+2 → Agent 3 (combined into single ≤500 token summary) ----
+    handoff_2 = await summarize_for_handoff(
+        transcript=agent2_transcript,
+        prior_summary=handoff_1.text,
+        summarizer_prompt=agent_config.summarizer_prompt,
+        source_agent=AgentType.RESOLUTION,
+        target_agent=AgentType.FINAL_NOTICE,
+        tracker=tracker,
+        settings=s,
+    )
+
+    # ---- Stage 3: Final Notice (Chat) ----
+    agent3_transcript = await _run_agent_conversation(
+        agent_type=AgentType.FINAL_NOTICE,
+        system_prompt=agent_config.agent3_prompt,
+        handoff_context=handoff_2.text,
+        persona=persona,
+        max_turns=s.simulation.conversation_turns,
+        tracker=tracker,
+        settings=s,
+        seed=seed,
+    )
+
+    # ---- Final outcome ----
+    outcome = _determine_outcome(agent1_transcript, agent2_transcript, agent3_transcript)
+    stop_contact = _borrower_refused_in_transcript(agent3_transcript)
+
+    return Conversation(
+        conversation_id=conv_id,
+        persona=persona,
+        seed=seed,
+        agent1_transcript=agent1_transcript,
+        agent2_transcript=agent2_transcript,
+        agent3_transcript=agent3_transcript,
+        handoff_1=handoff_1,
+        handoff_2=handoff_2,
+        outcome=outcome,
+        stop_contact=stop_contact,
+    )
+
+
+def _borrower_refused_in_transcript(transcript: Transcript) -> bool:
+    """Check if borrower explicitly asked to stop contact in this transcript."""
+    for msg in transcript.messages:
+        if msg.role == "user" and _borrower_wants_to_stop(msg.content):
+            return True
+    return False
+
+
 async def simulate_agent1(
     *,
     agent_config: AgentConfig,
@@ -200,9 +343,7 @@ async def simulate_agent1(
 ) -> Conversation:
     """
     Run Agent 1 (Assessment) conversation only.
-
-    Returns a Conversation with agent1_transcript populated.
-    Other fields (agent2, agent3, handoffs) are left empty for later stages.
+    Useful for testing Agent 1 in isolation.
     """
     s = settings or get_settings()
 
