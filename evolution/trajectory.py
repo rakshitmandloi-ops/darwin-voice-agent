@@ -73,9 +73,42 @@ def format_trajectory_for_rewriter(
         for persona, score in sorted(analysis.scores_by_persona.items()):
             parts.append(f"  {persona}: {score:.2f}")
 
+    # RANKED failures by score impact — this is the PRIMARY signal for the rewriter
+    if worst_conversations:
+        parts.append("\n### RANKED FAILURES BY SCORE IMPACT (fix highest first)")
+        parts.append("  Weight × (1 - pass_rate) = score points lost")
+        weights = {"goal": 0.30, "quality": 0.20, "handoff": 0.15, "system": 0.15}
+        from collections import defaultdict
+        check_agg = defaultdict(lambda: {"pass": 0, "total": 0, "category": ""})
+
+        for conv_data in worst_conversations:
+            # This is a dict with agents, handoffs, system, failing_criteria
+            for criterion in conv_data.get("failing_criteria", []):
+                parts_split = criterion.split("/")
+                if len(parts_split) >= 2:
+                    cat = "goal" if parts_split[0].startswith("agent") and "quality" not in criterion and "compliance" not in criterion else \
+                          "quality" if "quality" in criterion else \
+                          "handoff" if "handoff" in criterion else \
+                          "system" if "system" in criterion else "goal"
+                    check_agg[criterion]["total"] += 1
+                    check_agg[criterion]["category"] = cat
+
+        # Compute impact
+        ranked = []
+        for check, data in check_agg.items():
+            if data["total"] == 0:
+                continue
+            fail_rate = 1.0  # These are all from failing_criteria so fail_rate ~= 1
+            weight = weights.get(data["category"], 0.15)
+            impact = weight * fail_rate
+            ranked.append((check, impact, data["category"]))
+
+        for check, impact, cat in sorted(ranked, key=lambda x: -x[1])[:15]:
+            parts.append(f"  {impact:.1%} impact — {check} (category: {cat})")
+
     # Systematic failures
     if analysis.systematic_failures:
-        parts.append("\n### Systematic Failures (patterns across conversations)")
+        parts.append("\n### Systematic Failures")
         for failure in analysis.systematic_failures:
             parts.append(f"  - {failure}")
 

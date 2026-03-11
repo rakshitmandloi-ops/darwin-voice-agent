@@ -78,47 +78,44 @@ REWRITER_SYSTEM_PROMPT = """\
 You are an expert AI agent strategist improving debt collection agents.
 
 You will receive:
-1. Performance data (which criteria pass/fail per persona per agent)
-2. The current STRATEGY (structured parameters controlling agent behavior)
+1. Performance data with RANKED failures (highest-impact first)
+2. The current STRATEGY
+3. WORST conversation transcripts showing exactly what went wrong
+4. PREVIOUS FAILED ATTEMPTS — what was tried and didn't work
 
-Your job: diagnose failures and propose TARGETED strategy mutations.
+Your job: pick the SINGLE HIGHEST-IMPACT failure and fix it.
+
+CRITICAL RULES:
+- Change ONLY 1-2 components per mutation. Not all 4. Targeted > broad.
+- NEVER repeat a change that was already tried (see previous attempts).
+- Pick the failure with the HIGHEST WEIGHT × LOWEST PASS RATE.
+  Example: system continuity (weight 15%) at 0% pass = 15% of total score lost.
+  That's higher impact than goal completion (weight 30%) at 60% pass = 12% lost.
+- If handoff checks are failing, FIX THE SUMMARIZER — not the agents.
+- If system continuity is failing, fix how agents USE handoff context — their opening lines and reference_prior goals.
+- If quality "concise" is failing, make agent instructions shorter and more direct.
 
 WHAT YOU CAN CHANGE:
-- Goal priorities (reorder what the agent tackles first)
-- Turn allocation per goal (give more turns to struggling goals)
-- Goal instructions (tighten wording for failing criteria)
-- Persona tactics (change approach for specific borrower types)
-- Summarizer field priorities (reorder what gets kept vs dropped)
+- Goal priorities, turn allocation, instructions
+- Persona tactics
+- Summarizer field priorities and instructions
 - Opening lines
-- Rules (add specificity, never remove)
+- Rules (append only)
 
-OUTPUT FORMAT: JSON with these fields:
+OUTPUT FORMAT:
 {
   "strategy_changes": {
-    "agent1": {
-      "goals": [{"name": "goal_name", "priority": 2, "max_turns": 2, "instruction": "new text"}],
-      "persona_tactics": [{"persona_type": "combative", "approach": "new", "special_instructions": "new"}],
-      "rules": ["new rule to ADD"],
-      "opening_line": "new opening"
-    },
-    "agent2": { ... },
-    "agent3": { ... },
-    "summarizer": {
-      "fields": [{"name": "field_name", "priority": 1, "max_tokens": 40}]
+    "agent2": {
+      "goals": [{"name": "goal_name", "priority": 2, "max_turns": 2, "instruction": "new text"}]
     }
   },
-  "rationale": "Why these changes",
-  "failures_addressed": ["specific failure 1", ...]
+  "component_focus": "What specific problem this mutation targets",
+  "rationale": "Why THIS change for THIS failure",
+  "failures_addressed": ["the specific 0% criteria being fixed"]
 }
 
-RULES:
-- Only include agents/fields you want to CHANGE (omit unchanged ones)
-- For goals: include the full goal object with the change, matched by name
-- COMPLIANCE VIOLATIONS ARE TOP PRIORITY — fix those FIRST
-- Token budgets: agent1 ≤ 2000 total, agent2/agent3 ≤ 1500 total
-- Each agent has 4-6 turns MAX. Prioritize goals that matter most.
-- If a persona type consistently fails: adjust that persona's tactic
-- If summarizer drops critical info: increase that field's priority"""
+SCORING WEIGHTS for prioritization:
+  goal: 30%, compliance: 20%, quality: 20%, handoff: 15%, system: 15%"""
 
 
 def _build_rewriter_prompt(
@@ -198,15 +195,17 @@ def _build_rewriter_prompt(
                 parts.append(f"  {h2.get('text', '')[:200]}")
 
     if recent_mutations:
-        parts.append("\n## RECENT MUTATIONS (avoid repeating)")
-        for m in recent_mutations[-3:]:
-            parts.append(f"  - {m}")
+        parts.append("\n## PREVIOUS ATTEMPTS (these did NOT improve scores — do NOT repeat)")
+        for m in recent_mutations[-5:]:
+            parts.append(f"  - TRIED AND FAILED: {m}")
+        parts.append("  You MUST try a DIFFERENT approach than the above.")
 
     parts.append(
         "\n## TASK"
-        "\nAnalyze the performance data AND the actual conversation transcripts above."
-        "\nIdentify exactly what went wrong and propose targeted strategy mutations."
-        "\nFocus on the WORST-PERFORMING criteria and personas."
+        "\nLook at the RANKED FAILURES BY SCORE IMPACT above."
+        "\nPick the SINGLE HIGHEST-IMPACT failure that was NOT already tried."
+        "\nChange ONLY the 1-2 components needed to fix that specific failure."
+        "\nDo NOT change all 4 components. Targeted fixes only."
     )
 
     return "\n".join(parts)
