@@ -268,7 +268,8 @@ async def _check_criterion(
                     "content": (
                         "You evaluate AI debt collection conversations against specific criteria. "
                         "Answer with ONLY a JSON object: {\"pass\": true} or {\"pass\": false}. "
-                        "Be strict — if there's any doubt, fail it."
+                        "Be fair and evidence-based. Pass if the criterion is reasonably satisfied in the conversation. "
+                        "Fail only if there is clear evidence the criterion was violated or clearly not met."
                     ),
                 },
                 {
