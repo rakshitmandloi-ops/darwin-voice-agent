@@ -196,8 +196,9 @@ async def run_evolution(
             logger.info("Budget exhausted mid-generation, stopping")
             break
 
-    # Export results
+    # Export results and mark batch complete
     archive.export_raw_scores()
+    archive.complete()
     breakdown = tracker.get_breakdown()
     logger.info(f"Evolution complete. Archive size: {archive.size}, Best: {archive.get_best().mean_score:.2f}")
     logger.info(f"Total cost: ${breakdown.total_usd:.4f}")
@@ -221,7 +222,7 @@ async def _create_seed_entry(
     vc = VariantConfig(agent_config=ac, eval_config=eval_config)
 
     # Run 5 conversations (1 per persona)
-    conversations = await _simulate_batch(vc, n_personas=5, runs_per=1, tracker=tracker, settings=settings, seed_offset=0)
+    conversations = await _simulate_batch(vc, n_personas=5, runs_per=1, tracker=tracker, settings=settings, archive=None, seed_offset=0)
     scores = await _evaluate_batch(conversations, eval_config, tracker, settings)
 
     return ArchiveEntry(
@@ -256,7 +257,7 @@ async def _staged_evaluate(
     # Stage 1: 2 conversations
     stage1_convos = await _simulate_batch(
         child_vc, n_personas=2, runs_per=1,
-        tracker=tracker, settings=settings,
+        tracker=tracker, settings=settings, archive=archive,
         seed_offset=generation * 100,
     )
     stage1_scores = await _evaluate_batch(stage1_convos, eval_config, tracker, settings)
@@ -283,11 +284,10 @@ async def _staged_evaluate(
     # Stage 2: +8 more conversations (total 10)
     stage2_convos = await _simulate_batch(
         child_vc, n_personas=5, runs_per=2,
-        tracker=tracker, settings=settings,
+        tracker=tracker, settings=settings, archive=archive,
         seed_offset=generation * 100 + 10,
         exclude_seeds={c.seed for c in all_conversations},
     )
-    # Only take enough to reach ~8 new
     stage2_convos = stage2_convos[:8]
     stage2_scores = await _evaluate_batch(stage2_convos, eval_config, tracker, settings)
     all_conversations.extend(stage2_convos)
@@ -297,10 +297,10 @@ async def _staged_evaluate(
     avg_score = sum(s.weighted_total for s in all_scores) / len(all_scores)
     best_in_archive = archive.get_best().mean_score if archive.size > 0 else 0
 
-    if avg_score >= best_in_archive * 0.8:  # Within 80% of best
+    if avg_score >= best_in_archive * 0.8:
         stage3_convos = await _simulate_batch(
             child_vc, n_personas=5, runs_per=5,
-            tracker=tracker, settings=settings,
+            tracker=tracker, settings=settings, archive=archive,
             seed_offset=generation * 100 + 50,
             exclude_seeds={c.seed for c in all_conversations},
         )
@@ -379,6 +379,7 @@ async def _simulate_batch(
     runs_per: int,
     tracker: CostTracker,
     settings: Settings,
+    archive: Archive | None = None,
     seed_offset: int = 0,
     exclude_seeds: set[int] | None = None,
 ) -> list[Conversation]:
@@ -390,7 +391,6 @@ async def _simulate_batch(
     persona_types = list(PersonaType)[:n_personas]
     exclude = exclude_seeds or set()
 
-    # Build tasks
     tasks = []
     for run in range(runs_per):
         for pt in persona_types:
@@ -410,9 +410,15 @@ async def _simulate_batch(
                 )
             )
 
-    # Run all conversations concurrently
     conversations = await asyncio.gather(*tasks)
-    return list(conversations)
+    result = list(conversations)
+
+    # Store transcripts if archive provided
+    if archive:
+        for conv in result:
+            archive.store_conversation(conv)
+
+    return result
 
 
 async def _evaluate_batch(

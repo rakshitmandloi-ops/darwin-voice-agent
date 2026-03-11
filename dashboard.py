@@ -97,6 +97,9 @@ canvas:active{cursor:grabbing}
   <div class="chip"><span class="cl">Variants</span><span class="cv" id="s_vars">-</span></div>
   <div class="chip"><span class="cl">Spent</span><span class="cv yellow" id="s_cost">-</span></div>
   <div class="chip"><span class="cl">Calls</span><span class="cv dim" id="s_calls">-</span></div>
+  <select id="batch_select" onchange="switchBatch(this.value)" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:4px 8px;border-radius:4px;font-family:monospace;font-size:0.8em">
+    <option value="">Loading batches...</option>
+  </select>
 </div>
 
 <div id="main">
@@ -127,16 +130,43 @@ let DATA = null, NODES = [], EDGES = [], POS = {};
 let zoom = 1, panX = 0, panY = 0;
 let dragging = false, dragStartX, dragStartY, dragPanX, dragPanY;
 let hoveredEdge = null, selectedNode = null;
+let currentBatch = null;  // null = current/latest
 
 const NW = 180, NH = 70, HGAP = 30, VGAP = 110;
 
 // --- Data ---
 async function load() {
-  const r = await fetch('/api/state?t='+Date.now());
+  const batchParam = currentBatch ? '&batch='+currentBatch : '';
+  const r = await fetch('/api/state?t='+Date.now()+batchParam);
   DATA = await r.json();
   updateTopbar();
   layoutTree();
   draw();
+  loadBatches();
+}
+
+async function loadBatches() {
+  try {
+    const r = await fetch('/api/batches');
+    const batches = await r.json();
+    const sel = document.getElementById('batch_select');
+    const curVal = sel.value;
+    sel.innerHTML = '';
+    batches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.batch_id;
+      const status = b.status === 'complete' ? ' [done]' : ' [live]';
+      opt.textContent = b.batch_id + status + ' (' + (b.variants||0) + ' variants)';
+      if (b.batch_id === currentBatch || (!currentBatch && batches.indexOf(b) === 0)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+function switchBatch(batchId) {
+  currentBatch = batchId;
+  diffCache = {};
+  load();
 }
 
 function updateTopbar() {
@@ -707,13 +737,15 @@ function renderPersonaDetail(node, persona) {
   });
   h += renderCheckAgg(sysAgg);
 
-  // Per-conversation totals
-  h += `<div class="stage-header">Individual Scores</div>`;
+  // Per-conversation totals with transcript link
+  h += `<div class="stage-header">Individual Conversations</div>`;
   convos.forEach((c, i) => {
     const col = scoreColor(c.total);
-    h += `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:0.82em">`;
+    h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:0.82em">`;
     h += `<span class="dim">conv ${i+1}</span>`;
-    h += `<span style="color:${col};font-weight:bold">${c.total.toFixed(2)}</span></div>`;
+    h += `<span style="color:${col};font-weight:bold">${c.total.toFixed(2)}</span>`;
+    h += `<button onclick="viewTranscript('${c.id}')" style="background:#21262d;border:1px solid #30363d;color:#58a6ff;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:monospace;font-size:0.9em">View</button>`;
+    h += `</div>`;
   });
 
   return h;
@@ -837,6 +869,91 @@ async function showEdgeDetail(edge) {
   document.getElementById('diff-content').innerHTML = dh;
 }
 
+async function viewTranscript(convId) {
+  const batchParam = currentBatch ? '&batch='+currentBatch : '';
+  const r = await fetch('/api/transcript?id='+encodeURIComponent(convId)+batchParam);
+  const t = await r.json();
+  if (t.error) {
+    document.getElementById('d_body').innerHTML = `<div class="dim">${t.error}</div>`;
+    return;
+  }
+
+  document.getElementById('d_title').textContent = 'Transcript: ' + convId;
+  document.getElementById('d_tabs').innerHTML =
+    '<button class="active" onclick="viewTranscript(\''+convId+'\')">All Stages</button>' +
+    '<button onclick="viewTranscriptStage(\''+convId+'\',1)">Agent 1</button>' +
+    '<button onclick="viewTranscriptStage(\''+convId+'\',2)">Agent 2</button>' +
+    '<button onclick="viewTranscriptStage(\''+convId+'\',3)">Agent 3</button>';
+
+  let h = '';
+  h += `<div style="font-size:0.8em;color:#8b949e;margin-bottom:8px">Persona: <span class="blue">${t.persona_type}</span> | Outcome: <span class="${t.outcome==='deal_agreed'?'green':'yellow'}">${t.outcome}</span></div>`;
+
+  // Show all 3 stages
+  [['Agent 1 — Assessment', t.agent1, t.handoff_1],
+   ['Agent 2 — Resolution', t.agent2, t.handoff_2],
+   ['Agent 3 — Final Notice', t.agent3, null]].forEach(([title, msgs, handoff]) => {
+    if (!msgs || !msgs.length) return;
+    h += `<div class="stage-header">${title}</div>`;
+    msgs.forEach(m => {
+      const isAgent = m.role === 'assistant';
+      const bg = isAgent ? '#0d1a28' : '#1a1a0d';
+      const label = isAgent ? 'AGENT' : 'BORROWER';
+      const col = isAgent ? '#58a6ff' : '#d29922';
+      h += `<div style="background:${bg};padding:6px 8px;margin:3px 0;border-radius:4px;font-size:0.82em;border-left:3px solid ${col}">`;
+      h += `<span style="color:${col};font-weight:bold;font-size:0.85em">${label}</span><br>`;
+      h += `<span style="color:#c9d1d9">${m.content.replace(/</g,'&lt;')}</span>`;
+      h += `</div>`;
+    });
+    if (handoff) {
+      h += `<div style="background:#1a0d1a;padding:6px 8px;margin:6px 0;border-radius:4px;font-size:0.8em;border-left:3px solid #8b5cf6">`;
+      h += `<span style="color:#8b5cf6;font-weight:bold">HANDOFF (${handoff.token_count} tokens)</span><br>`;
+      h += `<span style="color:#a78bfa">${handoff.text.replace(/</g,'&lt;')}</span>`;
+      h += `</div>`;
+    }
+  });
+
+  document.getElementById('d_body').innerHTML = h;
+  detail.classList.add('open');
+  // Cache transcript data for stage views
+  window._lastTranscript = t;
+}
+
+function viewTranscriptStage(convId, stage) {
+  const t = window._lastTranscript;
+  if (!t) { viewTranscript(convId); return; }
+
+  const stageData = [null, t.agent1, t.agent2, t.agent3][stage];
+  const titles = [null, 'Agent 1 — Assessment', 'Agent 2 — Resolution', 'Agent 3 — Final Notice'];
+  const handoffs = [null, t.handoff_1, t.handoff_2, null];
+
+  document.querySelectorAll('#d_tabs button').forEach((b, i) => b.classList.toggle('active', i === stage));
+
+  let h = '';
+  h += `<div class="stage-header">${titles[stage]}</div>`;
+  if (stageData && stageData.length) {
+    stageData.forEach(m => {
+      const isAgent = m.role === 'assistant';
+      const bg = isAgent ? '#0d1a28' : '#1a1a0d';
+      const label = isAgent ? 'AGENT' : 'BORROWER';
+      const col = isAgent ? '#58a6ff' : '#d29922';
+      h += `<div style="background:${bg};padding:6px 8px;margin:3px 0;border-radius:4px;font-size:0.82em;border-left:3px solid ${col}">`;
+      h += `<span style="color:${col};font-weight:bold;font-size:0.85em">${label}</span><br>`;
+      h += `<span style="color:#c9d1d9">${m.content.replace(/</g,'&lt;')}</span>`;
+      h += `</div>`;
+    });
+  } else {
+    h += '<div class="dim">Agent did not run in this conversation</div>';
+  }
+  if (handoffs[stage]) {
+    const ho = handoffs[stage];
+    h += `<div style="background:#1a0d1a;padding:6px 8px;margin:6px 0;border-radius:4px;font-size:0.8em;border-left:3px solid #8b5cf6">`;
+    h += `<span style="color:#8b5cf6;font-weight:bold">HANDOFF (${ho.token_count} tokens)</span><br>`;
+    h += `<span style="color:#a78bfa">${ho.text.replace(/</g,'&lt;')}</span>`;
+    h += `</div>`;
+  }
+  document.getElementById('d_body').innerHTML = h;
+}
+
 function closeDetail() {
   detail.classList.remove('open');
   selectedNode = null;
@@ -866,16 +983,25 @@ setInterval(load, 5000);
 
 class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path.startswith('/api/state'):
-            self._json(get_state())
-        elif self.path.startswith('/api/diff'):
-            # /api/diff?parent=v0&child=v0_0_24dd
-            from urllib.parse import urlparse, parse_qs
-            qs = parse_qs(urlparse(self.path).query)
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(self.path)
+        qs = parse_qs(parsed.query)
+
+        if parsed.path == '/api/state':
+            batch = qs.get('batch', [None])[0]
+            self._json(get_state(batch_id=batch))
+        elif parsed.path == '/api/diff':
             parent_id = qs.get('parent', [''])[0]
             child_id = qs.get('child', [''])[0]
-            self._json(get_diff(parent_id, child_id))
-        elif self.path in ('/', '/index.html'):
+            batch = qs.get('batch', [None])[0]
+            self._json(get_diff(parent_id, child_id, batch_id=batch))
+        elif parsed.path == '/api/batches':
+            self._json(get_batches())
+        elif parsed.path == '/api/transcript':
+            conv_id = qs.get('id', [''])[0]
+            batch = qs.get('batch', [None])[0]
+            self._json(get_transcript(conv_id, batch_id=batch))
+        elif parsed.path in ('/', '/index.html'):
             self._html(HTML)
         else:
             self.send_error(404)
@@ -903,9 +1029,10 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 
 
-def get_state():
-    archive_file = LOGS_DIR / "archive.json"
-    costs_file = LOGS_DIR / "costs.json"
+def get_state(batch_id: str | None = None):
+    batch_dir = _resolve_batch_dir(batch_id)
+    archive_file = batch_dir / "archive.json"
+    costs_file = LOGS_DIR / "costs.json"  # costs are global
 
     variants = []
     if archive_file.exists():
@@ -1037,9 +1164,71 @@ def get_state():
     }
 
 
-def get_diff(parent_id: str, child_id: str) -> dict:
+def _resolve_batch_dir(batch_id: str | None = None) -> Path:
+    """Get the batch directory — current run or specific batch."""
+    if batch_id:
+        d = LOGS_DIR / "runs" / batch_id
+        if d.exists():
+            return d
+    # Try current_run symlink
+    current = LOGS_DIR / "current_run"
+    if current.exists():
+        return current.resolve()
+    # Fallback: latest run
+    runs_dir = LOGS_DIR / "runs"
+    if runs_dir.exists():
+        dirs = sorted(runs_dir.iterdir(), reverse=True)
+        if dirs:
+            return dirs[0]
+    # Legacy fallback
+    return LOGS_DIR
+
+
+def get_batches() -> list[dict]:
+    """List all evolution runs."""
+    runs_dir = LOGS_DIR / "runs"
+    if not runs_dir.exists():
+        return []
+    batches = []
+    for d in sorted(runs_dir.iterdir(), reverse=True):
+        if not d.is_dir():
+            continue
+        meta_path = d / "meta.json"
+        meta = {"batch_id": d.name}
+        if meta_path.exists():
+            with open(meta_path) as f:
+                meta = json.load(f)
+        archive_path = d / "archive.json"
+        if archive_path.exists():
+            with open(archive_path) as f:
+                data = json.load(f)
+            meta["variants"] = len(data)
+            if data:
+                scores = []
+                for e in data.values():
+                    for s in e.get("scores", []):
+                        scores.append(s["weighted_total"])
+                meta["best_score"] = max(scores) if scores else 0
+        else:
+            meta["variants"] = 0
+        batches.append(meta)
+    return batches
+
+
+def get_transcript(conv_id: str, batch_id: str | None = None) -> dict:
+    """Load a conversation transcript."""
+    batch_dir = _resolve_batch_dir(batch_id)
+    path = batch_dir / "transcripts" / f"{conv_id}.json"
+    if path.exists():
+        with open(path) as f:
+            return json.load(f)
+    return {"error": f"Transcript {conv_id} not found"}
+
+
+def get_diff(parent_id: str, child_id: str, batch_id: str | None = None) -> dict:
     """Compute prompt diffs between parent and child."""
-    archive_file = LOGS_DIR / "archive.json"
+    batch_dir = _resolve_batch_dir(batch_id)
+    archive_file = batch_dir / "archive.json"
     if not archive_file.exists():
         return {'error': 'No archive'}
 
