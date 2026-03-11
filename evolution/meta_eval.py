@@ -122,8 +122,8 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
                 compliance_fails += 1
 
             for agent_key, agent_score in score.agent_scores.items():
-                goal_scores.append(agent_score.goal)
-                quality_scores.append(agent_score.quality)
+                goal_scores.append(agent_score.goal_score)
+                quality_scores.append(agent_score.quality_score)
             system_scores.append(score.system_score)
 
     if all_scores:

@@ -84,13 +84,15 @@ def _build_strict_prompt(
     ]
 
     for agent_key, scores in regular_scores.agent_scores.items():
+        goal_failures = scores.goal.failures if hasattr(scores.goal, 'failures') else []
+        quality_failures = scores.quality.failures if hasattr(scores.quality, 'failures') else []
         parts.append(
-            f"  {agent_key}: goal={scores.goal}, quality={scores.quality}, "
+            f"  {agent_key}: goal={scores.goal_score:.1f} (failed: {goal_failures}), "
+            f"quality={scores.quality_score:.1f} (failed: {quality_failures}), "
             f"compliance={'PASS' if scores.compliance.all_passed else 'FAIL: ' + str(scores.compliance.violations)}"
         )
 
-    parts.append(f"  Handoffs: {regular_scores.handoff_scores}")
-    parts.append(f"  System: {regular_scores.system_score}")
+    parts.append(f"  System: {regular_scores.system_score:.1f}")
 
     parts.append("\nFULL CONVERSATION TRANSCRIPTS:")
     parts.append("\n--- AGENT 1 (Assessment/Chat) ---")

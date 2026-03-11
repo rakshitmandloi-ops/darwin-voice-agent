@@ -122,16 +122,15 @@ def _compute_metric_breakdown(scores: list[ConversationScores]) -> dict[str, flo
     }
 
     for s in scores:
-        goals = [a.goal for a in s.agent_scores.values()]
-        qualities = [a.quality for a in s.agent_scores.values()]
+        goal_scores = [a.goal_score for a in s.agent_scores.values()]
+        quality_scores = [a.quality_score for a in s.agent_scores.values()]
         compliant = 1.0 if s.compliance_passed else 0.0
 
-        metrics["goal_avg"].append(sum(goals) / len(goals) if goals else 0)
-        metrics["quality_avg"].append(sum(qualities) / len(qualities) if qualities else 0)
+        metrics["goal_avg"].append(sum(goal_scores) / len(goal_scores) if goal_scores else 0)
+        metrics["quality_avg"].append(sum(quality_scores) / len(quality_scores) if quality_scores else 0)
         metrics["compliance_rate"].append(compliant)
-        metrics["handoff_avg"].append(
-            sum(s.handoff_scores.values()) / len(s.handoff_scores) if s.handoff_scores else 0
-        )
+        handoff_vals = [h.score for h in s.handoff_scores.values()]
+        metrics["handoff_avg"].append(sum(handoff_vals) / len(handoff_vals) if handoff_vals else 0)
         metrics["system"].append(s.system_score)
         metrics["weighted_total"].append(s.weighted_total)
 
@@ -189,7 +188,7 @@ def _find_systematic_failures(scores: list[ConversationScores]) -> list[str]:
     # Low goal completion
     avg_goals = []
     for s in scores:
-        goals = [a.goal for a in s.agent_scores.values()]
+        goals = [a.goal_score for a in s.agent_scores.values()]
         avg_goals.append(sum(goals) / len(goals) if goals else 0)
     if avg_goals and sum(avg_goals) / len(avg_goals) < 5.0:
         failures.append("Low goal completion across conversations (avg < 5.0)")
@@ -231,7 +230,7 @@ def _find_systematic_failures(scores: list[ConversationScores]) -> list[str]:
 
     # Handoff quality issues
     for key in ["handoff_1", "handoff_2"]:
-        vals = [s.handoff_scores.get(key, 0) for s in scores]
+        vals = [s.handoff_scores[key].score for s in scores if key in s.handoff_scores]
         if vals and sum(vals) / len(vals) < 5.0:
             failures.append(f"Poor {key} quality (avg: {sum(vals)/len(vals):.1f})")
 
