@@ -59,6 +59,10 @@ async def run_evolution(
     tracker = CostTracker(s)
     archive = Archive(s)
 
+    # Live state for dashboard
+    from live_state import get_live_state
+    ls = get_live_state(s.logs_dir)
+
     # Initialize eval config (fixed during evolution)
     # Rubric text fields are no longer used — scorers use GOAL_CHECKS etc. directly
     eval_config = EvalConfig(
@@ -68,6 +72,7 @@ async def run_evolution(
 
     # Seed the archive if empty
     if archive.size == 0:
+        ls.set_evaluating_seed()
         seed_entry = await _create_seed_entry(eval_config, tracker, s, archive=archive)
         archive.add(seed_entry)
         logger.info(f"Seed v0: mean_score={seed_entry.mean_score:.2f}")
@@ -78,6 +83,7 @@ async def run_evolution(
 
     for gen in range(max_gen):
         logger.info(f"=== Generation {gen} ===")
+        ls.set_generation(gen)
 
         # 0. Budget check
         if tracker.is_budget_exhausted():
@@ -117,6 +123,7 @@ async def run_evolution(
                 recent_mutations.append(mutation.rationale[:100])
 
                 child_version = f"v{gen}_{parent_idx}_{uuid.uuid4().hex[:4]}"
+                ls.set_mutating(parent.version_id, child_version)
                 child_ac = apply_mutation(
                     parent.variant_config.agent_config,
                     mutation,
@@ -166,6 +173,9 @@ async def run_evolution(
                     child.promoted = True
                     gen_promoted = True
                     logger.info(f"  PROMOTED: {child.version_id} (score={child.mean_score:.2f})")
+                    ls.set_promoting(child.version_id, f"PROMOTED (score={child.mean_score:.2f})")
+                else:
+                    ls.set_promoting(child.version_id, f"not promoted (score={child.mean_score:.2f})")
 
             # 5. Meta-eval hook
             if meta_eval_fn and gen > 0 and gen % s.meta_eval.frequency == 0:

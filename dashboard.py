@@ -24,6 +24,20 @@ body{font-family:monospace;background:#0d1117;color:#c9d1d9;overflow:hidden;heig
 .chip .cv{font-weight:bold}
 .green{color:#3fb950}.red{color:#f85149}.yellow{color:#d29922}.blue{color:#58a6ff}.dim{color:#484f58}
 #main{flex:1;position:relative;overflow:hidden}
+#live-bar{padding:4px 20px;background:#161b22;border-bottom:1px solid #21262d;display:flex;gap:12px;align-items:center;font-size:0.8em;flex-shrink:0}
+#live-bar .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+#live-bar .pulse.on{background:#3fb950;animation:blink 1s infinite}
+#live-bar .pulse.off{background:#484f58}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+#live-panel{background:#0d1117;border-bottom:1px solid #21262d;max-height:250px;overflow-y:auto;padding:8px 20px;font-size:0.8em;display:flex;gap:16px;flex-shrink:0}
+#live-messages{flex:2;max-height:230px;overflow-y:auto}
+#live-activity{flex:1;max-height:230px;overflow-y:auto;border-left:1px solid #21262d;padding-left:12px}
+.live-msg{padding:3px 6px;margin:2px 0;border-radius:3px;font-size:0.9em;border-left:3px solid #30363d}
+.live-msg.agent{background:#0d1a28;border-color:#58a6ff}
+.live-msg.borrower{background:#1a1a0d;border-color:#d29922}
+.live-msg .lm-meta{font-size:0.8em;color:#484f58}
+.live-act{padding:2px 0;color:#6e7681;font-size:0.85em}
+.live-act.highlight{color:#58a6ff}
 canvas{position:absolute;top:0;left:0;cursor:grab}
 canvas:active{cursor:grabbing}
 
@@ -102,6 +116,15 @@ canvas:active{cursor:grabbing}
   </select>
 </div>
 
+<div id="live-bar">
+  <span id="live-status" class="dim">idle</span>
+  <span id="live-info" class="dim"></span>
+  <button id="live-toggle" onclick="toggleLive()" style="background:#21262d;border:1px solid #30363d;color:#8b949e;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:monospace;font-size:0.75em">Show Live</button>
+</div>
+<div id="live-panel" style="display:none">
+  <div id="live-messages"></div>
+  <div id="live-activity"></div>
+</div>
 <div id="main">
   <canvas id="c"></canvas>
 </div>
@@ -975,8 +998,62 @@ function zoomOut() { zoom = Math.max(0.2, zoom*0.8); draw(); }
 function resetView() { zoom=1; panX=0; panY=0; draw(); }
 
 window.addEventListener('resize', draw);
+let liveVisible = false;
+
+function toggleLive() {
+  liveVisible = !liveVisible;
+  document.getElementById('live-panel').style.display = liveVisible ? 'flex' : 'none';
+  document.getElementById('live-toggle').textContent = liveVisible ? 'Hide Live' : 'Show Live';
+}
+
+async function pollLive() {
+  try {
+    const r = await fetch('/api/live?t='+Date.now());
+    const live = await r.json();
+
+    const statusEl = document.getElementById('live-status');
+    const infoEl = document.getElementById('live-info');
+    const isActive = live.status !== 'idle' && live.status !== 'complete';
+
+    statusEl.innerHTML = `<span class="pulse ${isActive?'on':'off'}"></span>${live.status}`;
+    statusEl.className = isActive ? 'green' : 'dim';
+
+    if (live.current_variant) {
+      infoEl.textContent = `${live.current_variant} / ${live.current_persona || ''} / ${live.current_stage || ''}`;
+      infoEl.className = 'blue';
+    }
+
+    // Live messages
+    if (liveVisible && live.messages && live.messages.length) {
+      const msgEl = document.getElementById('live-messages');
+      let h = '<div style="color:#484f58;font-size:0.8em;margin-bottom:4px">Live Conversation</div>';
+      live.messages.forEach(m => {
+        const isAgent = m.role === 'assistant';
+        const cls = isAgent ? 'agent' : 'borrower';
+        const label = isAgent ? 'AGENT' : 'BORROWER';
+        h += `<div class="live-msg ${cls}"><span class="lm-meta">${m.stage} / ${label}</span><br>${m.content.replace(/</g,'&lt;')}</div>`;
+      });
+      msgEl.innerHTML = h;
+      msgEl.scrollTop = msgEl.scrollHeight;
+    }
+
+    // Activity log
+    if (liveVisible && live.activity_log && live.activity_log.length) {
+      const actEl = document.getElementById('live-activity');
+      let h = '<div style="color:#484f58;font-size:0.8em;margin-bottom:4px">Activity</div>';
+      live.activity_log.slice(-20).forEach(a => {
+        const cls = a.msg.includes('===') || a.msg.includes('PROMOTED') ? 'highlight' : '';
+        h += `<div class="live-act ${cls}">${a.msg}</div>`;
+      });
+      actEl.innerHTML = h;
+      actEl.scrollTop = actEl.scrollHeight;
+    }
+  } catch(e) {}
+}
+
 load();
 setInterval(load, 5000);
+setInterval(pollLive, 2000);
 </script>
 </body></html>"""
 
@@ -1001,6 +1078,8 @@ class Handler(SimpleHTTPRequestHandler):
             conv_id = qs.get('id', [''])[0]
             batch = qs.get('batch', [None])[0]
             self._json(get_transcript(conv_id, batch_id=batch))
+        elif parsed.path == '/api/live':
+            self._json(get_live())
         elif parsed.path in ('/', '/index.html'):
             self._html(HTML)
         else:
@@ -1162,6 +1241,15 @@ def get_state(batch_id: str | None = None):
         'budget': budget,
         'best_persona_scores': best.get('persona_scores',{}) if best else {},
     }
+
+
+def get_live() -> dict:
+    """Get live state for real-time dashboard updates."""
+    live_file = LOGS_DIR / "live.json"
+    if live_file.exists():
+        with open(live_file) as f:
+            return json.load(f)
+    return {"status": "idle", "messages": [], "activity_log": []}
 
 
 def _resolve_batch_dir(batch_id: str | None = None) -> Path:

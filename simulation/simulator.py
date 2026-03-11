@@ -44,6 +44,7 @@ async def _run_agent_conversation(
     system_prompt: str,
     handoff_context: str | None,
     persona: Persona,
+    conversation_id: str = "",
     max_turns: int,
     tracker: CostTracker,
     settings: Settings,
@@ -115,6 +116,13 @@ async def _run_agent_conversation(
         agent_messages.append({"role": "assistant", "content": agent_text})
         transcript_messages.append(Message(role="assistant", content=agent_text))
 
+        # Live state update
+        try:
+            from live_state import get_live_state
+            get_live_state().add_message("assistant", agent_text, agent_type.value)
+        except Exception:
+            pass
+
         # Add agent message to borrower's view
         borrower_messages.append({"role": "user", "content": agent_text})
 
@@ -144,6 +152,13 @@ async def _run_agent_conversation(
             borrower_messages.append({"role": "assistant", "content": borrower_text})
             transcript_messages.append(Message(role="user", content=borrower_text))
             agent_messages.append({"role": "user", "content": borrower_text})
+
+            # Live state update
+            try:
+                from live_state import get_live_state
+                get_live_state().add_message("user", borrower_text, agent_type.value)
+            except Exception:
+                pass
 
             if _borrower_wants_to_stop(borrower_text):
                 break
@@ -244,11 +259,20 @@ async def simulate_pipeline(
     s = settings or get_settings()
     conv_id = f"conv-{uuid.uuid4().hex[:8]}"
 
+    # Live state
+    try:
+        from live_state import get_live_state
+        ls = get_live_state()
+        ls.set_simulating(agent_config.version_id, persona.persona_type.value, conv_id, "agent1")
+    except Exception:
+        ls = None
+
     # ---- Stage 1: Assessment (Chat) ----
     agent1_transcript = await _run_agent_conversation(
         agent_type=AgentType.ASSESSMENT,
         system_prompt=agent_config.agent1_prompt,
         handoff_context=None,
+        conversation_id=conv_id,
         persona=persona,
         max_turns=s.simulation.conversation_turns,
         tracker=tracker,
@@ -280,11 +304,13 @@ async def simulate_pipeline(
     )
 
     # ---- Stage 2: Resolution (Voice-simulated) ----
+    if ls: ls.set_simulating(agent_config.version_id, persona.persona_type.value, conv_id, "agent2")
     agent2_transcript = await _run_agent_conversation(
         agent_type=AgentType.RESOLUTION,
         system_prompt=agent_config.agent2_prompt,
         handoff_context=handoff_1.text,
         persona=persona,
+        conversation_id=conv_id,
         max_turns=s.simulation.conversation_turns,
         tracker=tracker,
         settings=s,
@@ -330,11 +356,13 @@ async def simulate_pipeline(
     )
 
     # ---- Stage 3: Final Notice (Chat) ----
+    if ls: ls.set_simulating(agent_config.version_id, persona.persona_type.value, conv_id, "agent3")
     agent3_transcript = await _run_agent_conversation(
         agent_type=AgentType.FINAL_NOTICE,
         system_prompt=agent_config.agent3_prompt,
         handoff_context=handoff_2.text,
         persona=persona,
+        conversation_id=conv_id,
         max_turns=s.simulation.conversation_turns,
         tracker=tracker,
         settings=s,
