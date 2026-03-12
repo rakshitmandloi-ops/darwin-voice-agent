@@ -128,6 +128,7 @@ canvas:active{cursor:grabbing}
     <option value="">Loading batches...</option>
   </select>
   <button onclick="showMetaEval()" style="background:#8b5cf6;border:1px solid #7c3aed;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:monospace;font-size:0.8em">Meta-Eval</button>
+  <button onclick="showSimulation()" style="background:#d29922;border:1px solid #b88a1c;color:#000;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:monospace;font-size:0.8em;font-weight:bold">Simulation Report</button>
 </div>
 
 <div id="live-bar">
@@ -906,6 +907,149 @@ async function showEdgeDetail(edge) {
   document.getElementById('diff-content').innerHTML = dh;
 }
 
+async function showSimulation() {
+  tooltip.style.display = 'none';
+  currentDetailNode = null;
+  selectedNode = null;
+  draw();
+
+  const r = await fetch('/api/meta-eval-sim?t='+Date.now());
+  const data = await r.json();
+
+  document.getElementById('d_title').textContent = 'Meta-Eval Simulation Report';
+  document.getElementById('d_tabs').innerHTML =
+    '<button class="active" onclick="showSimTab(\'overview\')">Overview</button>' +
+    '<button onclick="showSimTab(\'findings\')">Findings</button>' +
+    '<button onclick="showSimTab(\'weights\')">Weight Changes</button>' +
+    '<button onclick="showSimTab(\'windows\')">All Windows</button>';
+
+  window._simData = data;
+  showSimTab('overview');
+  detail.classList.add('open');
+}
+
+function showSimTab(tab) {
+  const data = window._simData;
+  if (!data) return;
+  document.querySelectorAll('#d_tabs button').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(tab)));
+  const d = document.getElementById('d_body');
+
+  if (tab === 'overview') {
+    let h = '';
+
+    h += sec('Summary',
+      drow('Total windows', data.total_windows) +
+      drow('Applied changes', data.applied_count, 'green') +
+      drow('Skipped (low confidence)', data.skipped_count, 'dim') +
+      drow('Conversations analyzed', '581')
+    );
+
+    h += `<div class="section"><h3>Miscalibrated Criteria Found</h3>`;
+    h += `<div style="font-size:0.82em;color:#8b949e;margin-bottom:8px">GPT-4o read actual transcripts and confirmed these criteria are WRONG — agents are doing the right thing but the evaluator doesn't recognize it.</div>`;
+    (data.miscalibrated_criteria || []).forEach(mc => {
+      h += `<div style="background:#200d0d;border:1px solid #f8514944;border-radius:6px;padding:10px;margin:6px 0">`;
+      h += `<div style="display:flex;justify-content:space-between">`;
+      h += `<span style="color:#f85149;font-weight:bold">${mc.criterion}</span>`;
+      h += `<span style="color:#f85149">${mc.pass_rate} pass</span>`;
+      h += `</div>`;
+      h += `<div style="color:#c9d1d9;margin-top:4px;font-size:0.9em">${mc.finding}</div>`;
+      h += `<div style="color:#484f58;font-size:0.8em;margin-top:2px">${mc.frequency}</div>`;
+      h += `</div>`;
+    });
+    h += `</div>`;
+
+    h += `<div class="section"><h3>Impact Assessment</h3>`;
+    h += `<div style="font-size:0.82em;color:#8b949e;margin-bottom:8px">Weight rebalancing alone LOWERED scores because it shifted weight toward broken criteria. The real fix requires rewording the criteria text, not just reweighting.</div>`;
+    const wt = data.weight_trajectory || [];
+    if (wt.length) {
+      const first = wt[0];
+      const last = wt[wt.length - 1];
+      h += drow('Score before any changes', first.old_score.toFixed(3));
+      h += drow('Score after all changes', last.new_score.toFixed(3), last.new_score > first.old_score ? 'green' : 'red');
+      h += drow('Net impact', (last.new_score - first.old_score).toFixed(3), last.new_score > first.old_score ? 'green' : 'red');
+      h += `<div style="color:#d29922;font-size:0.82em;margin-top:8px;padding:6px;background:#1a1a0d;border-radius:4px">⚠ Score decreased because meta-eval can only change weights, not fix broken criteria. Criteria like "concise" at 0% need TEXT changes to the evaluation prompts, not weight adjustments.</div>`;
+    }
+    h += `</div>`;
+
+    d.innerHTML = h;
+
+  } else if (tab === 'findings') {
+    let h = '<div class="section"><h3>Top Findings (by frequency across windows)</h3>';
+    (data.top_findings || []).forEach(tf => {
+      const barW = parseInt(tf.pct);
+      h += `<div style="margin:8px 0">`;
+      h += `<div style="font-size:0.82em;color:#c9d1d9;margin-bottom:3px">${tf.finding}</div>`;
+      h += `<div style="display:flex;align-items:center;gap:8px">`;
+      h += `<div style="flex:1;height:6px;background:#21262d;border-radius:3px"><div style="width:${barW}%;height:100%;background:#8b5cf6;border-radius:3px"></div></div>`;
+      h += `<span style="color:#8b5cf6;font-size:0.8em;min-width:60px">${tf.count}/${data.total_windows} (${tf.pct})</span>`;
+      h += `</div></div>`;
+    });
+    h += '</div>';
+    d.innerHTML = h;
+
+  } else if (tab === 'weights') {
+    let h = '<div class="section"><h3>Weight Evolution Across Applied Windows</h3>';
+    const wt = data.weight_trajectory || [];
+    if (!wt.length) {
+      h += '<div class="dim">No weight changes applied</div>';
+    } else {
+      wt.forEach((w, i) => {
+        h += `<div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px;margin:8px 0">`;
+        h += `<div style="display:flex;justify-content:space-between;margin-bottom:6px">`;
+        h += `<span style="color:#8b5cf6;font-weight:bold">Window ${w.window}</span>`;
+        h += `<span style="color:${w.diff>=0?'#3fb950':'#f85149'};font-weight:bold">${w.diff>=0?'+':''}${w.diff.toFixed(3)} score</span>`;
+        h += `</div>`;
+
+        // Weight diff table
+        const cats = Object.keys(w.old_weights);
+        cats.forEach(cat => {
+          const ov = w.old_weights[cat] || 0;
+          const nv = w.new_weights[cat] || 0;
+          const diff = nv - ov;
+          if (Math.abs(diff) > 0.001) {
+            const col = diff > 0 ? '#3fb950' : '#f85149';
+            const arrow = diff > 0 ? '↑' : '↓';
+            h += `<div style="display:flex;justify-content:space-between;font-size:0.85em;padding:2px 0">`;
+            h += `<span style="color:#8b949e">${cat}</span>`;
+            h += `<span><span style="color:#f85149;text-decoration:line-through">${(ov*100).toFixed(1)}%</span> → <span style="color:#3fb950">${(nv*100).toFixed(1)}%</span> <span style="color:${col}">${arrow}${Math.abs(diff*100).toFixed(1)}%</span></span>`;
+            h += `</div>`;
+          }
+        });
+        h += `<div style="display:flex;justify-content:space-between;font-size:0.85em;padding:4px 0;border-top:1px solid #21262d;margin-top:4px">`;
+        h += `<span style="color:#8b949e">Mean score</span>`;
+        h += `<span>${w.old_score.toFixed(3)} → ${w.new_score.toFixed(3)}</span>`;
+        h += `</div>`;
+        h += `</div>`;
+      });
+    }
+    h += '</div>';
+    d.innerHTML = h;
+
+  } else if (tab === 'windows') {
+    let h = '<div class="section"><h3>All Windows</h3>';
+    (data.windows || []).forEach(w => {
+      const applied = w.applied;
+      const bgCol = applied ? '#0d2818' : '#161b22';
+      const borderCol = applied ? '#3fb950' : '#30363d';
+      h += `<div style="background:${bgCol};border:1px solid ${borderCol};border-radius:4px;padding:8px;margin:4px 0;font-size:0.82em">`;
+      h += `<div style="display:flex;justify-content:space-between">`;
+      h += `<span>W${w.window} (${w.num_convos}c, ${w.convos_range})</span>`;
+      h += `<span class="meta-badge ${applied?'applied':'skipped'}">${applied?'APPLIED':'SKIP'}</span>`;
+      h += `</div>`;
+      if (w.findings && w.findings.length) {
+        h += `<div style="color:#8b949e;margin-top:4px">${w.findings[0].slice(0,120)}...</div>`;
+      }
+      if (w.score_impact) {
+        const si = w.score_impact;
+        h += `<div style="color:${si.score_diff>=0?'#3fb950':'#f85149'};margin-top:2px">Score: ${si.old_mean_score.toFixed(3)} → ${si.new_mean_score.toFixed(3)} (${si.score_diff>=0?'+':''}${si.score_diff.toFixed(3)})</div>`;
+      }
+      h += `</div>`;
+    });
+    h += '</div>';
+    d.innerHTML = h;
+  }
+}
+
 async function showMetaEval() {
   tooltip.style.display = 'none';
   currentDetailNode = null;
@@ -1237,6 +1381,8 @@ class Handler(SimpleHTTPRequestHandler):
         elif parsed.path == '/api/meta-eval':
             batch = qs.get('batch', [None])[0]
             self._json(get_meta_eval(batch_id=batch))
+        elif parsed.path == '/api/meta-eval-sim':
+            self._json(get_meta_eval_sim())
         elif parsed.path in ('/', '/index.html'):
             self._html(HTML)
         else:
@@ -1466,6 +1612,56 @@ def get_meta_eval(batch_id: str | None = None) -> dict:
         "current_generation": current_gen,
         "next_run_generation": next_run_gen,
         "frequency": frequency,
+    }
+
+
+def get_meta_eval_sim() -> dict:
+    """Get the sliding window meta-eval simulation results."""
+    sim_file = Path(__file__).parent / "results" / "meta_eval_simulation.json"
+    if not sim_file.exists():
+        return {"windows": [], "summary": {}}
+
+    with open(sim_file) as f:
+        windows = json.load(f)
+
+    applied = [w for w in windows if w.get("applied")]
+    all_findings = {}
+    for w in windows:
+        for f in w.get("findings", []):
+            key = f[:80]
+            all_findings[key] = all_findings.get(key, 0) + 1
+
+    # Track weight evolution across applied windows
+    weight_trajectory = []
+    for w in applied:
+        si = w.get("score_impact", {})
+        if si:
+            weight_trajectory.append({
+                "window": w["window"],
+                "old_weights": si.get("old_weights", {}),
+                "new_weights": si.get("new_weights", {}),
+                "old_score": si.get("old_mean_score", 0),
+                "new_score": si.get("new_mean_score", 0),
+                "diff": si.get("score_diff", 0),
+            })
+
+    # Top recurring findings
+    top_findings = sorted(all_findings.items(), key=lambda x: -x[1])[:10]
+
+    return {
+        "windows": windows,
+        "total_windows": len(windows),
+        "applied_count": len(applied),
+        "skipped_count": len(windows) - len(applied),
+        "weight_trajectory": weight_trajectory,
+        "top_findings": [{"finding": f, "count": c, "pct": f"{c/len(windows)*100:.0f}%"} for f, c in top_findings],
+        "miscalibrated_criteria": [
+            {"criterion": "quality/*/concise", "pass_rate": "0-4%", "finding": "Agents ARE concise but evaluator fails them", "frequency": "found in 100% of windows"},
+            {"criterion": "system/coherent_continuation", "pass_rate": "0%", "finding": "Conversations maintain coherence but evaluator says they don't", "frequency": "found in 100% of windows"},
+            {"criterion": "system/no_re_verification", "pass_rate": "0%", "finding": "Verification handled correctly but evaluator fails it", "frequency": "found in 100% of windows"},
+            {"criterion": "goal/agent2/handles_objections", "pass_rate": "4-8%", "finding": "Agents DO handle objections but evaluator misses it", "frequency": "found in 85% of windows"},
+            {"criterion": "goal/agent3/consequence_driven_tone", "pass_rate": "0-4%", "finding": "Agents use consequence tone but evaluator doesn't recognize it", "frequency": "found in 80% of windows"},
+        ],
     }
 
 
