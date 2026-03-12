@@ -248,24 +248,32 @@ CURRENT CONFIG:
 - Compliance rules: {len(eval_config.compliance_rules)}
 
 WHAT TO LOOK FOR:
-1. Checks at 0% across ALL variants = criterion is miscalibrated or impossible. ONLY fix these.
+1. Checks at 0% across ALL variants = criterion text is WRONG. Rewrite it.
 2. Checks at 100% across ALL variants = criterion is too easy. Not urgent.
-3. Compliance blind spots = add new rules only if clear evidence of undetected violations.
-4. Weight imbalance = only adjust if a category is structurally stuck (like system at 0%).
+3. Weight imbalance = only adjust if a category is structurally stuck.
+
+WHAT YOU CAN CHANGE:
+1. REWRITE criterion text for checks that are clearly miscalibrated (0% pass but agents are doing it right).
+   Use "rubric_overrides" — key is the check name (e.g. "quality/agent1/concise"), value is the new criterion text.
+2. Adjust scoring weights if needed.
 
 WHAT NOT TO DO:
-- NEVER propose compliance rule changes. Compliance rules are IMMUTABLE.
-- Don't change weights just because a score is low — low might mean agents need to improve.
-- Don't tighten rubrics that are already discriminating (30-70% pass range is healthy).
+- NEVER change compliance rules. They are IMMUTABLE.
+- Don't rewrite criteria that are working (30-70% pass range is healthy).
+- Only rewrite criteria where 0% pass is clearly wrong based on evidence.
 
 OUTPUT JSON:
 {{
-  "findings": ["list of clear, evidence-backed flaws only"],
+  "findings": ["list of clear, evidence-backed flaws"],
   "proposed_changes": {{
-    "scoring_weights": {{}}
+    "scoring_weights": {{}},
+    "rubric_overrides": {{
+      "quality/agent1/concise": "new criterion text that better captures what concise means",
+      "system/coherent_continuation": "new criterion text"
+    }}
   }},
   "confidence": "high/medium/low — only apply if high",
-  "rationale": "specific evidence for each change"
+  "rationale": "specific evidence for each rewrite"
 }}"""
 
     response = await tracker.tracked_completion(
@@ -325,10 +333,20 @@ def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalC
     new_weights = dict(current.scoring_weights)
     changed = False
 
-    # COMPLIANCE RULES ARE IMMUTABLE — meta-eval cannot touch them
-    # Any compliance_rules in proposed_changes are silently ignored
+    # COMPLIANCE RULES ARE IMMUTABLE
     if changes.get("compliance_rules"):
         logger.info("Meta-eval: ignoring proposed compliance rule changes (immutable)")
+
+    # Apply rubric overrides (the main power of meta-eval)
+    new_overrides = dict(current.rubric_overrides) if hasattr(current, 'rubric_overrides') else {}
+    rubric_changes = changes.get("rubric_overrides", {})
+    if rubric_changes:
+        for key, new_text in rubric_changes.items():
+            if isinstance(new_text, str) and len(new_text) > 10:
+                old_text = new_overrides.get(key, "(hardcoded default)")
+                new_overrides[key] = new_text
+                logger.info(f"Meta-eval: rubric override [{key}]: '{old_text[:50]}' → '{new_text[:50]}'")
+                changed = True
 
     # Rebalance weights (with guardrails)
     weight_changes = changes.get("scoring_weights", {})
@@ -339,16 +357,14 @@ def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalC
                 if value > 0 and (key != "compliance" or value >= 0.15):
                     new_weights[key] = value
 
-        # Renormalize
         total = sum(new_weights.values())
         if total > 0 and abs(total - 1.0) > 0.01:
             new_weights = {k: v / total for k, v in new_weights.items()}
 
-        # Verify compliance floor
         if new_weights.get("compliance", 0) >= 0.15:
             changed = True
         else:
-            new_weights = dict(current.scoring_weights)  # Revert
+            new_weights = dict(current.scoring_weights)
 
     if not changed:
         return None
@@ -357,6 +373,7 @@ def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalC
         return EvalConfig(
             version_id=f"eval_v{result.generation}",
             compliance_rules=new_rules,
+            rubric_overrides=new_overrides,
             scoring_weights=new_weights,
         )
     except Exception as e:
@@ -390,6 +407,18 @@ def _log_meta_eval(
                 weight_diff[k] = {"before": round(old_v, 4), "after": round(new_v, 4), "diff": round(new_v - old_v, 4)}
         if weight_diff:
             changes_applied["scoring_weights"] = weight_diff
+
+        # Rubric overrides
+        old_overrides = old_config.rubric_overrides if hasattr(old_config, 'rubric_overrides') else {}
+        new_overrides = new_config.rubric_overrides if hasattr(new_config, 'rubric_overrides') else {}
+        rubric_diff = {}
+        for k in set(list(old_overrides.keys()) + list(new_overrides.keys())):
+            old_text = old_overrides.get(k, "(hardcoded default)")
+            new_text = new_overrides.get(k, "(hardcoded default)")
+            if old_text != new_text:
+                rubric_diff[k] = {"before": old_text[:200], "after": new_text[:200]}
+        if rubric_diff:
+            changes_applied["rubric_overrides"] = rubric_diff
 
         # Version change
         if old_config.version_id != new_config.version_id:

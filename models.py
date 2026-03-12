@@ -108,14 +108,20 @@ class AgentConfig(BaseModel, frozen=True):
 
 class EvalConfig(BaseModel, frozen=True):
     """
-    Evaluation methodology snapshot. Weights + compliance rules.
-    Rubric criteria are defined in evaluation/rubrics.py as binary checklists.
+    Evaluation methodology snapshot. Weights + rubric criteria text.
     NEVER changed by the evolution loop — only by the meta-eval cycle.
     """
     version_id: str = "eval_v0"
     compliance_rules: list[str] = Field(
         default_factory=list,
-        description="Append-only list of extra compliance rule definitions",
+        description="Immutable — meta-eval cannot change these",
+    )
+    # Evolvable rubric criteria text — meta-eval can rewrite these
+    # Keys match the check names in rubrics.py. If a key exists here,
+    # it OVERRIDES the hardcoded text. If absent, hardcoded is used.
+    rubric_overrides: dict[str, str] = Field(
+        default_factory=dict,
+        description="Meta-eval can rewrite criteria text here. Key = check name, value = new criterion text.",
     )
     scoring_weights: dict[str, float] = Field(
         default_factory=lambda: {

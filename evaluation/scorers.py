@@ -36,6 +36,20 @@ from models import (
 )
 
 
+def _resolve_criteria(
+    base_checks: dict[str, str],
+    overrides: dict[str, str],
+    prefix: str = "",
+) -> dict[str, str]:
+    """Merge base criteria with meta-eval overrides. Override wins if present."""
+    resolved = {}
+    for key, text in base_checks.items():
+        override_key = f"{prefix}/{key}" if prefix else key
+        # Check multiple key formats
+        resolved[key] = overrides.get(override_key, overrides.get(key, text))
+    return resolved
+
+
 async def score_conversation(
     conversation: Conversation,
     eval_config: EvalConfig,
@@ -54,10 +68,12 @@ async def score_conversation(
         (AgentType.FINAL_NOTICE, conversation.agent3_transcript),
     ]
 
+    overrides = eval_config.rubric_overrides if hasattr(eval_config, 'rubric_overrides') else {}
+
     agent_tasks = []
     for agent_type, transcript in agents_and_transcripts:
         agent_tasks.append(
-            _score_agent(agent_type, transcript, tracker, s)
+            _score_agent(agent_type, transcript, tracker, s, overrides)
         )
 
     agent_results = await asyncio.gather(*agent_tasks)
@@ -75,7 +91,7 @@ async def score_conversation(
                 conversation.handoff_1.text,
                 conversation.agent1_transcript.text,
                 conversation.agent2_transcript.text,
-                tracker, s,
+                tracker, s, overrides,
             )
         )
 
@@ -86,7 +102,7 @@ async def score_conversation(
                 conversation.handoff_2.text,
                 conversation.agent2_transcript.text,
                 conversation.agent3_transcript.text,
-                tracker, s,
+                tracker, s, overrides,
             )
         )
 
@@ -103,7 +119,7 @@ async def score_conversation(
         handoff_scores["handoff_2"] = empty_handoff
 
     # --- System continuity ---
-    system_checks = await _score_system(conversation, tracker, s)
+    system_checks = await _score_system(conversation, tracker, s, overrides)
 
     # --- Weighted total ---
     weights = eval_config.scoring_weights
@@ -143,9 +159,11 @@ async def _score_agent(
     transcript: "Transcript",
     tracker: CostTracker,
     settings: Settings,
+    rubric_overrides: dict[str, str] | None = None,
 ) -> AgentScores:
     """Score one agent: goal checklist + quality checklist + compliance."""
     from models import Transcript
+    overrides = rubric_overrides or {}
 
     if not transcript.messages:
         empty_goal = ChecklistResult(checks={k: False for k in GOAL_CHECKS.get(agent_type.value, {})})
@@ -160,8 +178,17 @@ async def _score_agent(
     text = transcript.text
 
     # Score all goal + quality checks in parallel
-    goal_criteria = GOAL_CHECKS.get(agent_type.value, {})
-    quality_criteria = QUALITY_CHECKS
+    # Resolve criteria: use meta-eval overrides if available, else hardcoded
+    goal_criteria = _resolve_criteria(
+        GOAL_CHECKS.get(agent_type.value, {}),
+        overrides,
+        prefix=f"goal/{agent_type.value}",
+    )
+    quality_criteria = _resolve_criteria(
+        QUALITY_CHECKS,
+        overrides,
+        prefix=f"quality/{agent_type.value}",
+    )
 
     all_checks = []
     all_keys = []
@@ -205,13 +232,15 @@ async def _score_handoff(
     target_text: str,
     tracker: CostTracker,
     settings: Settings,
+    rubric_overrides: dict[str, str] | None = None,
 ) -> HandoffChecklist:
     """Score handoff using checklist."""
     context = f"HANDOFF SUMMARY:\n{summary}\n\nSOURCE CONVERSATION:\n{source_text[:800]}\n\nTARGET CONVERSATION:\n{target_text[:800]}"
 
+    resolved = _resolve_criteria(HANDOFF_CHECKS, rubric_overrides or {}, prefix="handoff")
     tasks = []
     keys = []
-    for key, description in HANDOFF_CHECKS.items():
+    for key, description in resolved.items():
         keys.append(key)
         tasks.append(
             _check_criterion(context, description, "handoff", tracker, settings)
@@ -225,6 +254,7 @@ async def _score_system(
     conversation: Conversation,
     tracker: CostTracker,
     settings: Settings,
+    rubric_overrides: dict[str, str] | None = None,
 ) -> SystemChecklist:
     """Score system-level continuity using checklist."""
     parts = ["FULL CONVERSATION:\n"]
@@ -237,7 +267,8 @@ async def _score_system(
 
     tasks = []
     keys = []
-    for key, description in SYSTEM_CHECKS.items():
+    resolved_sys = _resolve_criteria(SYSTEM_CHECKS, rubric_overrides or {}, prefix="system")
+    for key, description in resolved_sys.items():
         keys.append(key)
         tasks.append(
             _check_criterion(context, description, "system", tracker, settings)
