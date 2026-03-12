@@ -181,26 +181,27 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
 
     for entry in archive.entries:
         for score in entry.scores:
-            agent_scores = _get(score, "agent_scores", {})
-            for ak, asc in (agent_scores.items() if isinstance(agent_scores, dict) else {}):
+            # Convert to dict to avoid Pydantic __getattr__ issues
+            sd = score.model_dump() if hasattr(score, 'model_dump') else score
+
+            for ak, asc in sd.get("agent_scores", {}).items():
                 for section in ["goal", "quality"]:
-                    section_data = _get(asc, section, {})
-                    checks = _get_checks(section_data)
+                    section_data = asc.get(section, {})
+                    checks = section_data.get("checks", {}) if isinstance(section_data, dict) else {}
                     for k, v in checks.items():
                         check_rates[f"{section}/{ak}/{k}"]["total"] += 1
                         if v:
                             check_rates[f"{section}/{ak}/{k}"]["pass"] += 1
 
-            handoff_scores = _get(score, "handoff_scores", {})
-            for hk, hv in (handoff_scores.items() if isinstance(handoff_scores, dict) else {}):
-                checks = _get_checks(hv)
+            for hk, hv in sd.get("handoff_scores", {}).items():
+                checks = hv.get("checks", {}) if isinstance(hv, dict) else {}
                 for k, v in checks.items():
                     check_rates[f"handoff/{hk}/{k}"]["total"] += 1
                     if v:
                         check_rates[f"handoff/{hk}/{k}"]["pass"] += 1
 
-            sys_data = _get(score, "system_checks", {})
-            sys_checks = _get_checks(sys_data)
+            sys_data = sd.get("system_checks", {})
+            sys_checks = sys_data.get("checks", {}) if isinstance(sys_data, dict) else {}
             for k, v in sys_checks.items():
                 check_rates[f"system/{k}"]["total"] += 1
                 if v:
@@ -256,15 +257,14 @@ WHAT TO LOOK FOR:
 4. Weight imbalance = only adjust if a category is structurally stuck (like system at 0%).
 
 WHAT NOT TO DO:
+- NEVER propose compliance rule changes. Compliance rules are IMMUTABLE.
 - Don't change weights just because a score is low — low might mean agents need to improve.
-- Don't add compliance rules without evidence of actual violations being missed.
 - Don't tighten rubrics that are already discriminating (30-70% pass range is healthy).
 
 OUTPUT JSON:
 {{
   "findings": ["list of clear, evidence-backed flaws only"],
   "proposed_changes": {{
-    "compliance_rules": ["new rule to ADD if needed"],
     "scoring_weights": {{}}
   }},
   "confidence": "high/medium/low — only apply if high",
@@ -320,22 +320,18 @@ def _parse_meta_eval(text: str, eval_config: EvalConfig, generation: int) -> Met
 def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalConfig | None:
     """
     Apply proposed changes with strict guardrails:
-    - Compliance rules: append-only (never remove, never weaken)
-    - Rubrics: can tighten, never loosen
+    - Compliance rules: NEVER CHANGED by meta-eval (hard rule)
     - Weights: compliance floor is 0.15, no weight can be 0
     """
     changes = result.proposed_changes
-    new_rules = list(current.compliance_rules)
+    new_rules = list(current.compliance_rules)  # Preserved as-is, never modified
     new_weights = dict(current.scoring_weights)
     changed = False
 
-    # Append new compliance rules
-    new_rule_texts = changes.get("compliance_rules", [])
-    if new_rule_texts:
-        for rule in new_rule_texts:
-            if rule and rule not in new_rules:
-                new_rules.append(rule)
-                changed = True
+    # COMPLIANCE RULES ARE IMMUTABLE — meta-eval cannot touch them
+    # Any compliance_rules in proposed_changes are silently ignored
+    if changes.get("compliance_rules"):
+        logger.info("Meta-eval: ignoring proposed compliance rule changes (immutable)")
 
     # Rebalance weights (with guardrails)
     weight_changes = changes.get("scoring_weights", {})
