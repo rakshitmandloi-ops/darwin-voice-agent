@@ -941,12 +941,12 @@ async function showMetaEval() {
       const confidence = run.confidence || run.evidence?.confidence || 'unknown';
       const dotCls = applied ? 'applied' : '';
 
-      h += `<div style="position:relative;margin-bottom:16px;padding-left:8px">`;
+      h += `<div style="position:relative;margin-bottom:20px;padding-left:8px;border-bottom:1px solid #21262d;padding-bottom:16px">`;
       h += `<div class="meta-dot ${dotCls}" style="top:4px"></div>`;
 
       // Header
       h += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">`;
-      h += `<span style="color:#8b5cf6;font-weight:bold;font-size:0.9em">Gen ${run.generation}</span>`;
+      h += `<span style="color:#8b5cf6;font-weight:bold;font-size:1em">Generation ${run.generation}</span>`;
       h += `<span>`;
       h += `<span class="meta-badge ${applied ? 'applied' : 'skipped'}">${applied ? 'APPLIED' : 'SKIPPED'}</span> `;
       if (confidence !== 'unknown') {
@@ -954,63 +954,73 @@ async function showMetaEval() {
       }
       h += `</span></div>`;
 
-      // Timestamp
       if (run.timestamp) {
-        h += `<div style="color:#484f58;font-size:0.75em">${run.timestamp}</div>`;
+        h += `<div style="color:#484f58;font-size:0.75em;margin-bottom:8px">${run.timestamp}</div>`;
       }
 
-      // Findings
+      // SECTION 1: What it detected (evidence)
+      h += `<div style="color:#58a6ff;font-size:0.85em;font-weight:bold;margin-top:8px">1. What it detected</div>`;
+
+      const checkIssues = run.per_check_issues || [];
+      if (checkIssues.length) {
+        checkIssues.forEach(issue => {
+          const isFloor = issue.includes('FLOOR');
+          const isCeiling = issue.includes('CEILING');
+          const icon = isFloor ? '🔴' : isCeiling ? '🟡' : '⚪';
+          const col = isFloor ? '#f85149' : isCeiling ? '#d29922' : '#8b949e';
+          h += `<div style="padding:3px 0;font-size:0.82em;color:${col}">${icon} ${issue}</div>`;
+        });
+      }
+
       const findings = run.findings || run.evidence?.findings || [];
       if (findings.length) {
-        h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Findings:</div>`;
         findings.forEach(f => {
           h += `<div class="meta-finding">${f}</div>`;
         });
       }
 
-      // Per-check issues detected
-      const checkIssues = run.per_check_issues || [];
-      if (checkIssues.length) {
-        h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Per-check issues detected:</div>`;
-        checkIssues.forEach(issue => {
-          const isFloor = issue.includes('FLOOR');
-          const isCeiling = issue.includes('CEILING');
-          const col = isFloor ? '#f85149' : isCeiling ? '#d29922' : '#8b949e';
-          h += `<div style="padding:2px 0;font-size:0.82em;color:${col}">${issue}</div>`;
-        });
-      }
-
-      // Exact changes applied (before → after)
-      const changesApplied = run.changes_applied || {};
-      if (Object.keys(changesApplied).length) {
-        h += `<div style="color:#3fb950;font-size:0.8em;margin-top:6px;font-weight:bold">Changes applied:</div>`;
-
-        if (changesApplied.scoring_weights) {
-          h += `<div style="font-size:0.82em;margin-top:4px">Scoring weights:</div>`;
-          for (const [k, v] of Object.entries(changesApplied.scoring_weights)) {
-            const col = v.diff > 0 ? '#3fb950' : '#f85149';
-            h += `<div class="meta-change">${k}: <span style="color:#f85149">${(v.before*100).toFixed(0)}%</span> → <span style="color:#3fb950">${(v.after*100).toFixed(0)}%</span> <span style="color:${col}">(${v.diff>0?'+':''}${(v.diff*100).toFixed(1)}%)</span></div>`;
-          }
-        }
-
-        if (changesApplied.version) {
-          h += `<div class="meta-change">Config version: ${changesApplied.version.before} → ${changesApplied.version.after}</div>`;
-        }
-      } else if (applied) {
-        // Fallback: show proposed changes if no diff recorded
-        const changes = run.proposed_changes || run.evidence?.proposed_changes || {};
-        if (changes.scoring_weights && Object.keys(changes.scoring_weights).length) {
-          h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Proposed weight changes:</div>`;
-          for (const [k, v] of Object.entries(changes.scoring_weights)) {
-            h += `<div class="meta-change">Weight: ${k} → ${v}</div>`;
-          }
-        }
-      }
-
-      // Rationale
+      // SECTION 2: Why (rationale)
       const rationale = run.evidence?.rationale || '';
       if (rationale) {
-        h += `<div style="color:#6e7681;font-size:0.8em;margin-top:4px;font-style:italic">${rationale}</div>`;
+        h += `<div style="color:#58a6ff;font-size:0.85em;font-weight:bold;margin-top:10px">2. Why</div>`;
+        h += `<div style="color:#c9d1d9;font-size:0.82em;margin-top:4px;padding:6px 8px;background:#0d1117;border-radius:4px">${rationale}</div>`;
+      }
+
+      // SECTION 3: What it changed (exact diff)
+      h += `<div style="color:#58a6ff;font-size:0.85em;font-weight:bold;margin-top:10px">3. What it changed</div>`;
+
+      const changesApplied = run.changes_applied || {};
+      if (Object.keys(changesApplied).length) {
+        if (changesApplied.scoring_weights) {
+          for (const [k, v] of Object.entries(changesApplied.scoring_weights)) {
+            const diffCol = v.diff > 0 ? '#3fb950' : '#f85149';
+            const arrow = v.diff > 0 ? '↑' : '↓';
+            h += `<div class="meta-change" style="display:flex;justify-content:space-between;align-items:center">`;
+            h += `<span>Scoring weight: <b>${k}</b></span>`;
+            h += `<span><span style="color:#f85149;text-decoration:line-through">${(v.before*100).toFixed(0)}%</span> → <span style="color:#3fb950">${(v.after*100).toFixed(0)}%</span> <span style="color:${diffCol}">${arrow} ${v.diff>0?'+':''}${(v.diff*100).toFixed(1)}%</span></span>`;
+            h += `</div>`;
+          }
+        }
+        if (changesApplied.version) {
+          h += `<div class="meta-change">Config: ${changesApplied.version.before} → ${changesApplied.version.after}</div>`;
+        }
+      } else if (applied) {
+        // Fallback for old entries without changes_applied
+        const proposed = run.proposed_changes || run.evidence?.proposed_changes || {};
+        if (proposed.scoring_weights && Object.keys(proposed.scoring_weights).length) {
+          h += `<div style="color:#8b949e;font-size:0.82em;margin-top:4px">Weight changes (proposed):</div>`;
+          for (const [k, v] of Object.entries(proposed.scoring_weights)) {
+            h += `<div class="meta-change">  ${k}: → ${typeof v === 'number' ? (v*100).toFixed(0)+'%' : v}</div>`;
+          }
+        }
+        if (proposed.compliance_rules && proposed.compliance_rules.length) {
+          h += `<div style="color:#8b949e;font-size:0.82em;margin-top:4px">Compliance rules proposed (BLOCKED — immutable):</div>`;
+          proposed.compliance_rules.forEach(rule => {
+            h += `<div style="padding:3px 0;font-size:0.82em;color:#f85149;text-decoration:line-through">${rule}</div>`;
+          });
+        }
+      } else {
+        h += `<div style="color:#484f58;font-size:0.82em;margin-top:4px">No changes applied ${confidence !== 'high' ? '(confidence too low)' : ''}</div>`;
       }
 
       h += `</div>`;
