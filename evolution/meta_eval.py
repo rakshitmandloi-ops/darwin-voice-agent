@@ -255,7 +255,9 @@ WHAT TO LOOK FOR:
 WHAT YOU CAN CHANGE:
 1. REWRITE criterion text for checks that are clearly miscalibrated (0% pass but agents are doing it right).
    Use "rubric_overrides" — key is the check name (e.g. "quality/agent1/concise"), value is the new criterion text.
-2. Adjust scoring weights if needed.
+2. ADD NEW checks to catch blind spots the current evaluation misses.
+   Use "rubric_overrides" with a new key (e.g. "quality/agent1/no_implied_threats").
+3. Adjust scoring weights if needed.
 
 WHAT NOT TO DO:
 - NEVER change compliance rules. They are IMMUTABLE.

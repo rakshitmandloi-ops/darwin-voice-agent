@@ -183,10 +183,14 @@ def cmd_simulate(args: argparse.Namespace) -> None:
 
 
 def cmd_rerun_eval(args: argparse.Namespace) -> None:
-    """Rerun evaluation for reproducibility verification."""
+    """Rerun evaluation on stored transcripts to verify scores are reproducible."""
     from config import get_settings
     from evaluation.cost_tracker import CostTracker
-    from evolution.archive import Archive
+    from evaluation.scorers import score_conversation
+    from models import (
+        AgentType, Conversation, EvalConfig, HandoffSummary,
+        Message, Outcome, Persona, PersonaType, Transcript,
+    )
 
     s = get_settings()
 
@@ -199,9 +203,105 @@ def cmd_rerun_eval(args: argparse.Namespace) -> None:
         run_config = json.load(f)
 
     print(f"Rerunning evaluation from {config_path}")
-    print(f"Config: {json.dumps(run_config, indent=2)[:200]}...")
+    print(f"Models: {run_config.get('models', {})}")
+    print(f"Weights: {run_config.get('scoring_weights', {})}")
     print()
-    print("(Full rerun implementation requires storing conversation seeds — coming in next step)")
+
+    # Find transcripts directory
+    batch_id = run_config.get("batch_id", "")
+    transcripts_dir = s.logs_dir / "runs" / batch_id / "transcripts"
+    archive_path = s.logs_dir / "runs" / batch_id / "archive.json"
+
+    if not transcripts_dir.exists():
+        print(f"Transcripts not found at {transcripts_dir}")
+        sys.exit(1)
+
+    # Load archive for original scores
+    with open(archive_path) as f:
+        archive_data = json.load(f)
+
+    # Build eval config from run_config
+    eval_config = EvalConfig(
+        scoring_weights=run_config.get("scoring_weights", {}),
+        rubric_overrides=run_config.get("rubric_overrides", {}),
+    )
+
+    tracker = CostTracker(s)
+
+    # Pick sample to re-score
+    sample_convos = run_config.get("conversations", [])[:args.sample]
+    print(f"Re-scoring {len(sample_convos)} conversations...")
+
+    async def _rerun():
+        diffs = []
+        for conv_info in sample_convos:
+            conv_id = conv_info.get("conversation_id", "")
+            t_path = transcripts_dir / f"{conv_id}.json"
+            if not t_path.exists():
+                continue
+
+            with open(t_path) as f:
+                t = json.load(f)
+
+            # Rebuild Conversation from transcript
+            def _mk_t(msgs):
+                return Transcript(messages=tuple(Message(role=m["role"], content=m["content"]) for m in msgs))
+
+            persona = Persona(
+                name=t.get("persona", "unknown"),
+                persona_type=PersonaType(t.get("persona_type", "cooperative")),
+                system_prompt="", voice_system_prompt="", difficulty=0.5,
+            )
+            h1 = HandoffSummary(text=t["handoff_1"]["text"], token_count=t["handoff_1"]["token_count"],
+                                source_agent=AgentType.ASSESSMENT, target_agent=AgentType.RESOLUTION) if t.get("handoff_1") else None
+            h2 = HandoffSummary(text=t["handoff_2"]["text"], token_count=t["handoff_2"]["token_count"],
+                                source_agent=AgentType.RESOLUTION, target_agent=AgentType.FINAL_NOTICE) if t.get("handoff_2") else None
+
+            conv = Conversation(
+                conversation_id=conv_id, persona=persona, seed=t.get("seed", 0),
+                agent1_transcript=_mk_t(t.get("agent1", [])),
+                agent2_transcript=_mk_t(t.get("agent2", [])),
+                agent3_transcript=_mk_t(t.get("agent3", [])),
+                handoff_1=h1, handoff_2=h2,
+                outcome=Outcome(t.get("outcome", "no_deal")),
+            )
+
+            new_scores = await score_conversation(conv, eval_config, tracker, s)
+
+            # Find original score
+            original_total = None
+            for vid, entry in archive_data.items():
+                for sc in entry.get("scores", []):
+                    if sc.get("conversation_id") == conv_id:
+                        original_total = sc["weighted_total"]
+                        break
+
+            diff = abs(new_scores.weighted_total - original_total) if original_total else None
+            diffs.append({
+                "conv_id": conv_id,
+                "persona": conv_info.get("persona", "?"),
+                "original": original_total,
+                "rerun": new_scores.weighted_total,
+                "diff": diff,
+            })
+
+            status = "✅" if diff and diff < 0.5 else "⚠️" if diff else "?"
+            print(f"  {status} {conv_id}: original={original_total:.2f}, rerun={new_scores.weighted_total:.2f}, diff={diff:.3f}" if diff else f"  ? {conv_id}: no original score found")
+
+        # Summary
+        valid_diffs = [d["diff"] for d in diffs if d["diff"] is not None]
+        if valid_diffs:
+            avg_diff = sum(valid_diffs) / len(valid_diffs)
+            max_diff = max(valid_diffs)
+            within_tolerance = sum(1 for d in valid_diffs if d < 0.5)
+            print(f"\nReproducibility: {within_tolerance}/{len(valid_diffs)} within ±0.5 tolerance")
+            print(f"Average diff: {avg_diff:.3f}, Max diff: {max_diff:.3f}")
+            if avg_diff < 0.5:
+                print("✅ REPRODUCIBLE — scores match within tolerance")
+            else:
+                print("⚠️ SCORES DIVERGED — check model versions and temperatures")
+
+    asyncio.run(_rerun())
 
 
 def main() -> None:
@@ -229,6 +329,7 @@ def main() -> None:
     # rerun-eval
     rerun_parser = subparsers.add_parser("rerun-eval", help="Rerun evaluation for reproducibility")
     rerun_parser.add_argument("--config", type=str, required=True, help="Path to run_config.json")
+    rerun_parser.add_argument("--sample", type=int, default=10, help="Number of conversations to re-score")
 
     args = parser.parse_args()
 

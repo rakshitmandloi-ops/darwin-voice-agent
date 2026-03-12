@@ -41,12 +41,22 @@ def _resolve_criteria(
     overrides: dict[str, str],
     prefix: str = "",
 ) -> dict[str, str]:
-    """Merge base criteria with meta-eval overrides. Override wins if present."""
+    """Merge base criteria with meta-eval overrides. Override wins if present.
+    Also adds NEW checks from overrides that match the prefix."""
     resolved = {}
+    # Start with base, apply overrides
     for key, text in base_checks.items():
         override_key = f"{prefix}/{key}" if prefix else key
-        # Check multiple key formats
         resolved[key] = overrides.get(override_key, overrides.get(key, text))
+
+    # Add NEW checks from overrides that match this prefix but aren't in base
+    if prefix:
+        for override_key, text in overrides.items():
+            if override_key.startswith(prefix + "/"):
+                check_name = override_key[len(prefix) + 1:]
+                if check_name not in resolved:
+                    resolved[check_name] = text
+
     return resolved
 
 

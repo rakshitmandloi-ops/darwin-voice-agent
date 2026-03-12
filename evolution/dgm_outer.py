@@ -246,6 +246,7 @@ async def run_evolution(
 
     # Export results and mark batch complete
     archive.export_raw_scores()
+    _export_run_config(archive, eval_config, s)
     archive.complete()
     breakdown = tracker.get_breakdown()
     logger.info(f"Evolution complete. Archive size: {archive.size}, Best: {archive.get_best().mean_score:.2f}")
@@ -258,6 +259,59 @@ async def run_evolution(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _export_run_config(archive: Archive, eval_config: EvalConfig, settings: Settings) -> None:
+    """Export run_config.json for reproducibility — all seeds, model versions, temperatures."""
+    import json
+
+    # Collect all seeds used
+    seeds = []
+    for entry in archive.entries:
+        for score in entry.scores:
+            seeds.append({
+                "conversation_id": score.conversation_id,
+                "persona": score.persona_type.value,
+                "variant": entry.version_id,
+            })
+
+    config = {
+        "models": {
+            "simulation": settings.models.sim,
+            "evaluation": settings.models.eval,
+            "judge": settings.models.judge,
+            "rewrite": settings.models.rewrite,
+        },
+        "temperatures": {
+            "simulation": settings.temperature.sim,
+            "evaluation": settings.temperature.eval,
+        },
+        "token_budgets": {
+            "max_agent": settings.tokens.max_agent,
+            "max_handoff": settings.tokens.max_handoff,
+            "agent1_prompt": settings.tokens.agent1_prompt,
+            "agent2_prompt": settings.tokens.agent2_prompt,
+            "agent3_prompt": settings.tokens.agent3_prompt,
+        },
+        "evolution": {
+            "max_generations": settings.evolution.max_generations,
+            "children_per_generation": settings.evolution.children_per_generation,
+            "success_threshold": settings.evolution.success_threshold,
+            "plateau_generations": settings.evolution.plateau_generations,
+            "confidence_level": settings.evolution.confidence_level,
+            "bootstrap_n": settings.evolution.bootstrap_n,
+        },
+        "scoring_weights": eval_config.scoring_weights,
+        "rubric_overrides": eval_config.rubric_overrides if hasattr(eval_config, 'rubric_overrides') else {},
+        "conversations": seeds,
+        "total_variants": archive.size,
+        "batch_id": archive.batch_id,
+    }
+
+    path = archive.batch_dir / "run_config.json"
+    with open(path, "w") as f:
+        json.dump(config, f, indent=2)
+    logger.info(f"Exported run_config.json to {path}")
+
 
 def _get_worst_conversations(
     parent: ArchiveEntry,
