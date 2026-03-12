@@ -197,6 +197,7 @@ async def run_evolution(
                     parent=parent_entry,
                     eval_config=eval_config,
                     tracker=tracker,
+                    archive=archive,
                     settings=s,
                 )
 
@@ -264,14 +265,19 @@ def _export_run_config(archive: Archive, eval_config: EvalConfig, settings: Sett
     """Export run_config.json for reproducibility — all seeds, model versions, temperatures."""
     import json
 
-    # Collect all seeds used
+    # Collect all seeds used — load numeric seed from transcript
     seeds = []
     for entry in archive.entries:
         for score in entry.scores:
+            # Load seed from transcript if available
+            t = archive.get_transcript(score.conversation_id)
+            numeric_seed = t.get("seed", None) if t else None
             seeds.append({
                 "conversation_id": score.conversation_id,
                 "persona": score.persona_type.value,
                 "variant": entry.version_id,
+                "seed": numeric_seed,
+                "generation": entry.generation,
             })
 
     config = {
@@ -498,14 +504,13 @@ async def _try_promote(
     parent: ArchiveEntry,
     eval_config: EvalConfig,
     tracker: CostTracker,
+    archive: "Archive",
     settings: Settings,
 ) -> bool:
     """
     Attempt to promote a child by comparing against its own parent.
-
-    Returns True if promoted, False otherwise.
+    Runs strict grader on 2 conversations if all other gates pass.
     """
-    # Statistical comparison
     comparison = paired_bootstrap(parent.scores, child.scores)
 
     logger.info(
@@ -514,7 +519,6 @@ async def _try_promote(
         f"p={comparison.p_value:.3f}, var_high={comparison.variance_too_high}"
     )
 
-    # Log per-persona breakdown
     if comparison.per_persona_breakdown:
         for persona, diff in sorted(comparison.per_persona_breakdown.items()):
             logger.info(f"    {persona}: {diff:+.2f}")
@@ -532,11 +536,40 @@ async def _try_promote(
         return False
 
     if check_persona_regression(comparison):
-        regressed = [p for p, d in comparison.per_persona_breakdown.items() if d < -0.5]
+        regressed = [p for p, d in comparison.per_persona_breakdown.items() if d < -0.3]
         logger.info(f"  {child.version_id}: NOT PROMOTED — persona regression: {regressed}")
         return False
 
-    child.strict_grader_result = None
+    # Strict grader: run on 2 worst conversations (expensive but important)
+    try:
+        worst_scores = sorted(child.scores, key=lambda s: s.weighted_total)[:2]
+        for ws in worst_scores:
+            t = archive.get_transcript(ws.conversation_id)
+            if not t:
+                continue
+            # Rebuild Conversation for strict grader
+            from models import Transcript, Message, Persona, PersonaType, HandoffSummary, Conversation, Outcome
+            def _mk_t(msgs):
+                return Transcript(messages=tuple(Message(role=m["role"], content=m["content"]) for m in msgs))
+            persona = Persona(name=t.get("persona", ""), persona_type=PersonaType(t.get("persona_type", "cooperative")),
+                              system_prompt="", voice_system_prompt="", difficulty=0.5)
+            h1 = HandoffSummary(text=t["handoff_1"]["text"], token_count=t["handoff_1"]["token_count"],
+                                source_agent=AgentType.ASSESSMENT, target_agent=AgentType.RESOLUTION) if t.get("handoff_1") else None
+            h2 = HandoffSummary(text=t["handoff_2"]["text"], token_count=t["handoff_2"]["token_count"],
+                                source_agent=AgentType.RESOLUTION, target_agent=AgentType.FINAL_NOTICE) if t.get("handoff_2") else None
+            conv = Conversation(conversation_id=ws.conversation_id, persona=persona, seed=t.get("seed", 0),
+                                agent1_transcript=_mk_t(t.get("agent1", [])), agent2_transcript=_mk_t(t.get("agent2", [])),
+                                agent3_transcript=_mk_t(t.get("agent3", [])), handoff_1=h1, handoff_2=h2,
+                                outcome=Outcome(t.get("outcome", "no_deal")))
+            strict_result = await strict_validate(conv, ws, tracker, settings)
+            if not strict_result.validated:
+                logger.info(f"  {child.version_id}: NOT PROMOTED — strict grader flagged: {strict_result.flags[:3]}")
+                child.strict_grader_result = strict_result
+                return False
+            child.strict_grader_result = strict_result
+    except Exception as e:
+        logger.warning(f"  Strict grader failed (proceeding without): {e}")
+
     return True
 
 

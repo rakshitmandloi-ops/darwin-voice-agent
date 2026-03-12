@@ -2,7 +2,8 @@
 Sliding window meta-eval simulation.
 
 Runs meta-eval across existing data in a sliding window:
-- Fill 70% of 128K context with full conversation transcripts + scores
+- Size each window by the ACTUAL prompt token count
+- Include EVERY conversation in that window in the prompt
 - Slide: 50% old data + 50% new data each iteration
 - At each window: meta-eval proposes rubric/weight changes
 - Recalculate scores with new weights to show impact
@@ -63,50 +64,123 @@ def _load_conversations_with_transcripts(
 def _build_window(
     conversations: list[dict],
     start_idx: int,
+    current_weights: dict[str, float],
+    window_number: int,
     max_tokens: int = MAX_CONTEXT_TOKENS,
 ) -> tuple[list[dict], int]:
-    """Build a window of conversations that fits in context. Returns (window, end_idx)."""
+    """Build the largest window whose fully formatted prompt fits in context."""
     window = []
-    total_tokens = 0
+    end_idx = start_idx
 
     for i in range(start_idx, len(conversations)):
-        conv = conversations[i]
+        candidate = window + [conversations[i]]
+        prompt = _format_window_for_meta_eval(candidate, current_weights, window_number)
+        prompt_tokens = count_tokens(prompt)
 
-        # Estimate token size
-        score_tokens = count_tokens(json.dumps(conv["score"], default=str))
-        transcript_tokens = 0
-        if conv["transcript"]:
-            # Include full transcript but truncate individual messages if needed
-            t = conv["transcript"]
-            for stage in ["agent1", "agent2", "agent3"]:
-                for msg in t.get(stage, []):
-                    transcript_tokens += count_tokens(msg.get("content", "")[:500]) + 10
-            for hk in ["handoff_1", "handoff_2"]:
-                h = t.get(hk)
-                if h:
-                    transcript_tokens += count_tokens(h.get("text", "")[:300]) + 10
-
-        conv_tokens = score_tokens + transcript_tokens
-        if total_tokens + conv_tokens > max_tokens:
+        if prompt_tokens > max_tokens:
+            if not window:
+                logger.warning(
+                    "Conversation %s alone exceeds window budget (%s tokens > %s). "
+                    "Including it anyway so sliding window can make progress.",
+                    conversations[i].get("score", {}).get("conversation_id", "?"),
+                    prompt_tokens,
+                    max_tokens,
+                )
+                return candidate, i + 1
             break
 
-        window.append(conv)
-        total_tokens += conv_tokens
+        window = candidate
+        end_idx = i + 1
 
-    return window, start_idx + len(window)
+    return window, end_idx
+
+
+def _collect_failing_checks(score: dict[str, Any]) -> list[str]:
+    """Flatten failed checks for one conversation score."""
+    failing = []
+
+    for ak, asc in score.get("agent_scores", {}).items():
+        for section in ["goal", "quality"]:
+            sd = asc.get(section, {})
+            checks = sd.get("checks", {}) if isinstance(sd, dict) else {}
+            for k, v in checks.items():
+                if not v:
+                    failing.append(f"{ak}/{section}/{k}")
+
+        comp = asc.get("compliance", {})
+        comp_checks = comp.get("rule_results", {}) if isinstance(comp, dict) else {}
+        for k, v in comp_checks.items():
+            if not v:
+                failing.append(f"{ak}/compliance/{k}")
+
+    for hk, hv in score.get("handoff_scores", {}).items():
+        checks = hv.get("checks", {}) if isinstance(hv, dict) else {}
+        for k, v in checks.items():
+            if not v:
+                failing.append(f"{hk}/{k}")
+
+    sys_data = score.get("system_checks", {})
+    sys_checks = sys_data.get("checks", {}) if isinstance(sys_data, dict) else {}
+    for k, v in sys_checks.items():
+        if not v:
+            failing.append(f"system/{k}")
+
+    return failing
+
+
+def _format_full_conversation(conv: dict[str, Any], index: int) -> str:
+    """Format one full conversation for the meta-eval prompt."""
+    score = conv["score"]
+    parts = [
+        f"### Conversation {index}",
+        f"Variant: {conv['variant_id']}",
+        f"Generation: {conv['generation']}",
+        f"Conversation ID: {score.get('conversation_id', '')}",
+        f"Persona: {score.get('persona_type', '?')}",
+        f"Weighted total: {score.get('weighted_total', 0):.2f}",
+        f"Resolution rate: {score.get('resolution_rate', 0)}",
+        "Score JSON:",
+        json.dumps(score, indent=2, default=str),
+    ]
+
+    failing = _collect_failing_checks(score)
+    if failing:
+        parts.append("Failing checks:")
+        parts.append(", ".join(failing))
+
+    transcript = conv.get("transcript")
+    if transcript:
+        parts.append("Full transcript:")
+        for stage, label in [("agent1", "Agent 1"), ("agent2", "Agent 2"), ("agent3", "Agent 3")]:
+            msgs = transcript.get(stage, [])
+            if msgs:
+                parts.append(f"--- {label} ---")
+                for msg in msgs:
+                    role = "AGENT" if msg.get("role") == "assistant" else "BORROWER"
+                    parts.append(f"[{role}] {msg.get('content', '')}")
+
+        for hk in ["handoff_1", "handoff_2"]:
+            handoff = transcript.get(hk)
+            if handoff:
+                parts.append(f"--- {hk} ({handoff.get('token_count', '?')} tok) ---")
+                parts.append(handoff.get("text", ""))
+    else:
+        parts.append("Transcript: MISSING")
+
+    return "\n".join(parts)
 
 
 def _format_window_for_meta_eval(
     window: list[dict],
     current_weights: dict[str, float],
     window_number: int,
-    total_windows: int,
 ) -> str:
     """Format a window of conversations as a prompt for meta-eval."""
     parts = []
-    parts.append(f"SLIDING WINDOW META-EVAL — Window {window_number}/{total_windows}")
+    parts.append(f"SLIDING WINDOW META-EVAL — Window {window_number}")
     parts.append(f"Conversations in this window: {len(window)}")
     parts.append(f"Current scoring weights: {current_weights}")
+    parts.append("Every conversation in this window is included below in full.")
     parts.append("")
 
     # Aggregate pass rates for this window
@@ -143,65 +217,12 @@ def _format_window_for_meta_eval(
         if rate < 30 or rate > 95:
             parts.append(f"  {rate:5.1f}% {check} ({data['pass']}/{data['total']}){flag}")
 
-    # Sample conversations with FULL transcripts
+    # Full window contents
     parts.append("")
-    parts.append("## SAMPLE CONVERSATIONS (with full transcripts + scores)")
-
-    # Pick diverse samples: worst, best, and middle
-    scored = [(conv, conv["score"].get("weighted_total", 0)) for conv in window]
-    scored.sort(key=lambda x: x[1])
-
-    samples = []
-    if len(scored) >= 3:
-        samples = [scored[0][0], scored[len(scored)//2][0], scored[-1][0]]
-    else:
-        samples = [s[0] for s in scored]
-
-    # Add samples where specific checks failed
-    for conv, _ in scored:
-        s = conv["score"]
-        # Find one where concise failed
-        for ak, asc in s.get("agent_scores", {}).items():
-            q = asc.get("quality", {})
-            checks = q.get("checks", {}) if isinstance(q, dict) else {}
-            if checks.get("concise") == False and conv not in samples:
-                samples.append(conv)
-                break
-        if len(samples) >= 6:
-            break
-
-    for i, conv in enumerate(samples[:6]):
-        s = conv["score"]
-        parts.append(f"\n### Conversation {i+1}: {conv['variant_id']} / {s.get('persona_type', '?')} (total: {s.get('weighted_total', 0):.2f})")
-
-        # Show failing checks
-        failing = []
-        for ak, asc in s.get("agent_scores", {}).items():
-            for section in ["goal", "quality"]:
-                sd = asc.get(section, {})
-                checks = sd.get("checks", {}) if isinstance(sd, dict) else {}
-                for k, v in checks.items():
-                    if not v:
-                        failing.append(f"{ak}/{section}/{k}")
-        if failing:
-            parts.append(f"  FAILING: {', '.join(failing[:10])}")
-
-        # Show transcript
-        t = conv.get("transcript")
-        if t:
-            for stage, label in [("agent1", "Agent 1"), ("agent2", "Agent 2"), ("agent3", "Agent 3")]:
-                msgs = t.get(stage, [])
-                if msgs:
-                    parts.append(f"  --- {label} ---")
-                    for m in msgs[:6]:
-                        role = "AGENT" if m.get("role") == "assistant" else "BORROWER"
-                        parts.append(f"  [{role}] {m.get('content', '')[:300]}")
-
-            for hk in ["handoff_1", "handoff_2"]:
-                h = t.get(hk)
-                if h:
-                    parts.append(f"  --- {hk} ({h.get('token_count', '?')} tok) ---")
-                    parts.append(f"  {h.get('text', '')[:200]}")
+    parts.append("## FULL CONVERSATIONS IN THIS WINDOW")
+    for i, conv in enumerate(window, start=1):
+        parts.append("")
+        parts.append(_format_full_conversation(conv, i))
 
     return "\n".join(parts)
 
@@ -293,17 +314,20 @@ async def run_sliding_meta_eval(
     window_num = 0
 
     while window_start < len(conversations):
-        window, window_end = _build_window(conversations, window_start)
+        window_num += 1
+        window, window_end = _build_window(
+            conversations,
+            window_start,
+            current_weights,
+            window_num,
+        )
         if not window:
             break
 
-        window_num += 1
-        total_windows = (len(conversations) // len(window)) + 1
-
         logger.info(f"Window {window_num}: conversations {window_start}-{window_end} ({len(window)} convos)")
 
-        # Build prompt with full transcripts
-        prompt = _format_window_for_meta_eval(window, current_weights, window_num, total_windows)
+        # Build prompt with all conversations in the window
+        prompt = _format_window_for_meta_eval(window, current_weights, window_num)
         prompt_tokens = count_tokens(prompt)
         logger.info(f"  Prompt: {prompt_tokens} tokens")
 

@@ -34,19 +34,32 @@ def paired_bootstrap(
     n_boot = n_bootstrap or s.evolution.bootstrap_n
     ci = confidence_level or s.evolution.confidence_level
 
-    # Extract weighted totals
-    parent_vals = np.array([s.weighted_total for s in parent_scores])
-    child_vals = np.array([s.weighted_total for s in child_scores])
+    # Pair by persona_type: match parent[i] with child[i] within same persona
+    parent_by_persona: dict[str, list[float]] = {}
+    child_by_persona: dict[str, list[float]] = {}
+    for sc in parent_scores:
+        parent_by_persona.setdefault(sc.persona_type.value, []).append(sc.weighted_total)
+    for sc in child_scores:
+        child_by_persona.setdefault(sc.persona_type.value, []).append(sc.weighted_total)
 
-    # Handle mismatched lengths (use min)
-    n = min(len(parent_vals), len(child_vals))
-    parent_vals = parent_vals[:n]
-    child_vals = child_vals[:n]
+    paired_parent = []
+    paired_child = []
+    for persona in set(list(parent_by_persona.keys()) + list(child_by_persona.keys())):
+        p_vals = parent_by_persona.get(persona, [])
+        c_vals = child_by_persona.get(persona, [])
+        n_pairs = min(len(p_vals), len(c_vals))
+        for i in range(n_pairs):
+            paired_parent.append(p_vals[i])
+            paired_child.append(c_vals[i])
+
+    parent_vals = np.array(paired_parent)
+    child_vals = np.array(paired_child)
+    n = len(parent_vals)
 
     if n == 0:
         return _empty_comparison("v_parent", "v_child")
 
-    # Compute paired differences
+    # Compute paired differences (paired by persona)
     diffs = child_vals - parent_vals
     observed_mean = float(np.mean(diffs))
     observed_std = float(np.std(diffs, ddof=1)) if n > 1 else 0.0
@@ -103,12 +116,13 @@ def paired_bootstrap(
 
 def check_persona_regression(
     comparison: EvalComparison,
-    threshold: float = -0.5,
+    threshold: float = -0.3,
 ) -> bool:
     """
     Check if any persona type regressed significantly.
 
     Returns True if regression detected (bad), False if OK.
+    Tighter threshold (-0.3) to ensure no scenario gets worse.
     """
     for persona, diff in comparison.per_persona_breakdown.items():
         if diff < threshold:

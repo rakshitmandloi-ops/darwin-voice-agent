@@ -61,8 +61,13 @@ async def run_meta_eval(
     settings: Settings | None = None,
 ) -> EvalConfig:
     """
-    Run one meta-evaluation cycle. Analyzes the archive for signs that
-    the primary evaluation methodology is flawed, and proposes corrections.
+    Run one meta-evaluation cycle with actual transcript evidence.
+
+    1. Gathers aggregate per-check pass rates (floor/ceiling detection)
+    2. Loads 3-5 worst conversation transcripts for direct inspection
+    3. Sends both aggregate + transcript evidence to gpt-4o
+    4. Gets rubric rewrites + weight changes back
+    5. Applies with guardrails (confidence gate)
 
     Returns the (potentially updated) EvalConfig.
     """
@@ -70,10 +75,14 @@ async def run_meta_eval(
 
     logger.info("Meta-eval: analyzing evaluation methodology...")
 
-    # Gather second-order evidence
+    # Gather aggregate evidence
     evidence = _gather_evidence(archive)
 
-    # Ask the judge model to analyze
+    # Load worst conversation transcripts for direct inspection
+    transcript_evidence = _load_worst_transcripts(archive, n=3)
+    evidence["sample_transcripts"] = transcript_evidence
+
+    # Ask the judge model to analyze (with transcripts)
     analysis = await _analyze_evaluation(evidence, eval_config, tracker, s)
 
     # Parse proposed changes
@@ -99,6 +108,48 @@ async def run_meta_eval(
     logger.info("Meta-eval: no changes applied")
     _log_meta_eval(result, eval_config, None, s)
     return eval_config
+
+
+def _load_worst_transcripts(archive: Any, n: int = 3) -> list[dict]:
+    """Load worst-scoring conversation transcripts for meta-eval inspection."""
+    all_scores = []
+    for entry in archive.entries:
+        for score in entry.scores:
+            all_scores.append((score, entry.version_id))
+
+    # Sort by weighted_total, get worst
+    all_scores.sort(key=lambda x: x[0].weighted_total)
+    worst = all_scores[:n]
+
+    transcripts = []
+    for score, vid in worst:
+        t = archive.get_transcript(score.conversation_id)
+        if not t:
+            continue
+        # Collect failing checks
+        failing = []
+        for ak, asc in score.agent_scores.items():
+            for k, v in asc.goal.checks.items():
+                if not v:
+                    failing.append(f"{ak}/goal/{k}")
+            for k, v in asc.quality.checks.items():
+                if not v:
+                    failing.append(f"{ak}/quality/{k}")
+        for k, v in score.system_checks.checks.items():
+            if not v:
+                failing.append(f"system/{k}")
+
+        transcripts.append({
+            "conversation_id": score.conversation_id,
+            "persona": score.persona_type.value,
+            "total": score.weighted_total,
+            "failing": failing,
+            "agent1": [{"role": m["role"], "content": m["content"][:300]} for m in t.get("agent1", [])[:6]],
+            "agent2": [{"role": m["role"], "content": m["content"][:300]} for m in t.get("agent2", [])[:6]],
+            "agent3": [{"role": m["role"], "content": m["content"][:300]} for m in t.get("agent3", [])[:6]],
+        })
+
+    return transcripts
 
 
 def _gather_evidence(archive: Any) -> dict[str, Any]:
@@ -219,6 +270,26 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
     return evidence
 
 
+def _format_sample_transcripts(transcripts: list[dict]) -> str:
+    """Format sample transcripts for the meta-eval prompt."""
+    if not transcripts:
+        return "  No transcripts available"
+    parts = []
+    for i, t in enumerate(transcripts):
+        parts.append(f"\n  ### Sample {i+1}: {t.get('persona', '?')} (score: {t.get('total', 0):.2f})")
+        failing = t.get("failing", [])
+        if failing:
+            parts.append(f"  FAILING: {', '.join(failing[:10])}")
+        for stage in ["agent1", "agent2", "agent3"]:
+            msgs = t.get(stage, [])
+            if msgs:
+                parts.append(f"  --- {stage} ---")
+                for m in msgs[:4]:
+                    role = "AGENT" if m.get("role") == "assistant" else "BORROWER"
+                    parts.append(f"  [{role}] {m.get('content', '')[:200]}")
+    return "\n".join(parts)
+
+
 async def _analyze_evaluation(
     evidence: dict[str, Any],
     eval_config: EvalConfig,
@@ -237,11 +308,14 @@ there is clear evidence of a problem. Do NOT change things that are working.
 RULE: Only fix things where the evidence is undeniable. A check at 0% across ALL variants
 and ALL conversations is clearly broken. A check at 40% might just be hard — leave it alone.
 
-EVIDENCE:
-{json.dumps({k: v for k, v in evidence.items() if k != 'per_check_issues'}, indent=2, default=str)}
+EVIDENCE (aggregate):
+{json.dumps({k: v for k, v in evidence.items() if k not in ('per_check_issues', 'sample_transcripts')}, indent=2, default=str)}
 
 PER-CHECK FLOOR/CEILING ISSUES (most important signal):
 {per_check_str}
+
+SAMPLE CONVERSATIONS (read these to verify if 0% checks are truly broken):
+{_format_sample_transcripts(evidence.get('sample_transcripts', []))}
 
 CURRENT CONFIG:
 - Weights: {eval_config.scoring_weights}

@@ -76,28 +76,22 @@ async def _run_agent_conversation(
         {"role": "system", "content": borrower_prompt},
     ]
 
-    # --- Token budget: track total agent-side tokens ---
-    total_budget = settings.tokens.max_agent  # 2000
-    base_tokens = _count_messages_tokens(agent_messages)
-    # Reserve ~150 tokens for the agent's next response
-    response_reserve = 150
-
+    # --- Token budget: enforce system prompt + handoff ≤ 2000 ---
+    # The 2000 token budget covers the INITIAL context only:
+    #   system prompt + handoff context ≤ 2000
+    # Conversation history grows separately using the LLM's own context window.
     usage = enforce_budget(
         prompt=system_prompt,
         handoff=handoff_context,
-        limit=total_budget,
+        limit=settings.tokens.max_agent,  # 2000
         agent_name=agent_type.value,
     )
     log_token_usage(usage, settings)
 
     # --- Conversation loop ---
     transcript_messages: list[Message] = []
-    current_tokens = base_tokens
 
     for turn in range(max_turns):
-        # Check if we have budget for another turn
-        if current_tokens + response_reserve >= total_budget:
-            break
 
         # --- Agent turn ---
         agent_response = await tracker.tracked_completion(
