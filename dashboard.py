@@ -93,6 +93,19 @@ canvas:active{cursor:grabbing}
 .diff-section .dl-del{color:#f85149;background:#200d0d}
 .diff-section .dl-hdr{color:#58a6ff;font-weight:bold}
 .diff-section .dl-ctx{color:#6e7681}
+.meta-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:0.8em;font-weight:bold}
+.meta-badge.applied{background:#0d2818;color:#3fb950}
+.meta-badge.skipped{background:#1a1a0d;color:#d29922}
+.meta-badge.high{background:#0d2818;color:#3fb950}
+.meta-badge.medium{background:#1a1a0d;color:#d29922}
+.meta-badge.low{background:#200d0d;color:#f85149}
+.meta-finding{padding:6px 8px;margin:4px 0;background:#0d1117;border-radius:4px;font-size:0.85em;border-left:3px solid #8b5cf6}
+.meta-change{padding:6px 8px;margin:4px 0;background:#0d1117;border-radius:4px;font-size:0.85em;border-left:3px solid #3fb950}
+.meta-timeline{position:relative;padding-left:20px}
+.meta-timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:#30363d}
+.meta-dot{position:absolute;left:4px;width:10px;height:10px;border-radius:50%;background:#8b5cf6}
+.meta-dot.applied{background:#3fb950}
+.meta-dot.pending{background:#30363d;border:2px solid #8b5cf6}
 
 /* Zoom controls */
 #controls{position:fixed;bottom:16px;right:400px;z-index:20;display:flex;gap:6px}
@@ -114,6 +127,7 @@ canvas:active{cursor:grabbing}
   <select id="batch_select" onchange="switchBatch(this.value)" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:4px 8px;border-radius:4px;font-family:monospace;font-size:0.8em">
     <option value="">Loading batches...</option>
   </select>
+  <button onclick="showMetaEval()" style="background:#8b5cf6;border:1px solid #7c3aed;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:monospace;font-size:0.8em">Meta-Eval</button>
 </div>
 
 <div id="live-bar">
@@ -892,6 +906,120 @@ async function showEdgeDetail(edge) {
   document.getElementById('diff-content').innerHTML = dh;
 }
 
+async function showMetaEval() {
+  tooltip.style.display = 'none';
+  currentDetailNode = null;
+  selectedNode = null;
+  draw();
+
+  const batchParam = currentBatch ? '&batch='+currentBatch : '';
+  const r = await fetch('/api/meta-eval?t='+Date.now()+batchParam);
+  const data = await r.json();
+
+  document.getElementById('d_title').textContent = 'Meta-Evaluation';
+  document.getElementById('d_tabs').innerHTML = '';
+
+  let h = '';
+
+  // Status bar
+  h += `<div class="section"><h3>Status</h3>`;
+  h += drow('Total runs', data.total_runs);
+  h += drow('Current generation', data.current_generation);
+  h += drow('Next meta-eval at', 'Gen ' + data.next_run_generation);
+  h += drow('Frequency', 'Every ' + data.frequency + ' generations');
+  h += `</div>`;
+
+  if (data.runs && data.runs.length) {
+    // Show runs in reverse chronological order
+    const runs = [...data.runs].reverse();
+    h += `<div class="section"><h3>History (${runs.length} runs)</h3>`;
+    h += `<div class="meta-timeline">`;
+
+    runs.forEach((run, i) => {
+      const isLatest = i === 0;
+      const applied = run.applied;
+      const confidence = run.confidence || run.evidence?.confidence || 'unknown';
+      const dotCls = applied ? 'applied' : '';
+
+      h += `<div style="position:relative;margin-bottom:16px;padding-left:8px">`;
+      h += `<div class="meta-dot ${dotCls}" style="top:4px"></div>`;
+
+      // Header
+      h += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">`;
+      h += `<span style="color:#8b5cf6;font-weight:bold;font-size:0.9em">Gen ${run.generation}</span>`;
+      h += `<span>`;
+      h += `<span class="meta-badge ${applied ? 'applied' : 'skipped'}">${applied ? 'APPLIED' : 'SKIPPED'}</span> `;
+      if (confidence !== 'unknown') {
+        h += `<span class="meta-badge ${confidence}">${confidence}</span>`;
+      }
+      h += `</span></div>`;
+
+      // Timestamp
+      if (run.timestamp) {
+        h += `<div style="color:#484f58;font-size:0.75em">${run.timestamp}</div>`;
+      }
+
+      // Findings
+      const findings = run.findings || run.evidence?.findings || [];
+      if (findings.length) {
+        h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Findings:</div>`;
+        findings.forEach(f => {
+          h += `<div class="meta-finding">${f}</div>`;
+        });
+      }
+
+      // Proposed changes
+      const changes = run.proposed_changes || run.evidence?.proposed_changes || {};
+      const hasChanges = Object.keys(changes).length > 0;
+      if (hasChanges) {
+        h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Proposed changes:</div>`;
+
+        if (changes.compliance_rules && changes.compliance_rules.length) {
+          changes.compliance_rules.forEach(rule => {
+            h += `<div class="meta-change">+ Compliance rule: ${rule}</div>`;
+          });
+        }
+        if (changes.scoring_weights && Object.keys(changes.scoring_weights).length) {
+          for (const [k, v] of Object.entries(changes.scoring_weights)) {
+            h += `<div class="meta-change">Weight: ${k} → ${v}</div>`;
+          }
+        }
+        if (changes.rubric_tightenings && Object.keys(changes.rubric_tightenings).length) {
+          for (const [k, v] of Object.entries(changes.rubric_tightenings)) {
+            h += `<div class="meta-change">Rubric: ${k} → ${v}</div>`;
+          }
+        }
+      }
+
+      // Rationale
+      const rationale = run.evidence?.rationale || '';
+      if (rationale) {
+        h += `<div style="color:#6e7681;font-size:0.8em;margin-top:4px;font-style:italic">${rationale}</div>`;
+      }
+
+      h += `</div>`;
+    });
+
+    h += `</div></div>`;
+  } else {
+    h += `<div class="section"><h3>History</h3><div class="dim">No meta-eval runs yet. First run at Gen ${data.next_run_generation}.</div></div>`;
+  }
+
+  // What it will check next
+  h += `<div class="section"><h3>What it checks</h3>`;
+  h += `<div style="font-size:0.82em;color:#8b949e">`;
+  h += `<div style="margin-bottom:4px">Every ${data.frequency} generations, meta-eval analyzes:</div>`;
+  h += `<div class="meta-finding">Per-check floor detection: criteria at 0% across all variants = miscalibrated</div>`;
+  h += `<div class="meta-finding">Per-check ceiling detection: criteria at 100% = too easy, not discriminating</div>`;
+  h += `<div class="meta-finding">Compliance blind spots: violations being missed by the checker</div>`;
+  h += `<div class="meta-finding">Weight balance: categories stuck at 0% shouldn't dominate scoring</div>`;
+  h += `<div style="margin-top:6px;color:#d29922">Only applies changes with HIGH confidence. Conservative by design.</div>`;
+  h += `</div></div>`;
+
+  document.getElementById('d_body').innerHTML = h;
+  detail.classList.add('open');
+}
+
 async function viewTranscript(convId) {
   const batchParam = currentBatch ? '&batch='+currentBatch : '';
   const r = await fetch('/api/transcript?id='+encodeURIComponent(convId)+batchParam);
@@ -1080,6 +1208,9 @@ class Handler(SimpleHTTPRequestHandler):
             self._json(get_transcript(conv_id, batch_id=batch))
         elif parsed.path == '/api/live':
             self._json(get_live())
+        elif parsed.path == '/api/meta-eval':
+            batch = qs.get('batch', [None])[0]
+            self._json(get_meta_eval(batch_id=batch))
         elif parsed.path in ('/', '/index.html'):
             self._html(HTML)
         else:
@@ -1241,6 +1372,81 @@ def get_state(batch_id: str | None = None):
         'budget': budget,
         'best_persona_scores': best.get('persona_scores',{}) if best else {},
     }
+
+
+def get_meta_eval(batch_id: str | None = None) -> dict:
+    """Get meta-eval history and status."""
+    # Read meta-eval log
+    log_file = LOGS_DIR / "eval_versions" / "meta_eval_log.json"
+    runs = []
+    if log_file.exists():
+        with open(log_file) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    runs.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+
+    # Also check batch-specific log
+    batch_dir = _resolve_batch_dir(batch_id)
+    batch_log = batch_dir / "eval_versions" / "meta_eval_log.json"
+    if batch_log.exists() and batch_log != log_file:
+        with open(batch_log) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        runs.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+
+    # Get current generation from archive
+    archive_file = batch_dir / "archive.json"
+    current_gen = 0
+    if archive_file.exists():
+        with open(archive_file) as f:
+            data = json.load(f)
+        if data:
+            current_gen = max(e.get("generation", 0) for e in data.values())
+
+    # Calculate next meta-eval
+    frequency = 4  # from config
+    last_run_gen = runs[-1].get("generation", 0) if runs else -1
+    next_run_gen = last_run_gen + frequency if last_run_gen >= 0 else frequency
+
+    # Get per-check issues from evidence gathering (live)
+    per_check_issues = []
+    try:
+        from evolution.meta_eval import _gather_evidence
+        from evolution.archive import Archive
+        a = Archive(get_settings_lazy(), batch_id=batch_id, read_only=True) if batch_id else None
+        if a is None:
+            # Try current batch
+            batch_dir_resolved = _resolve_batch_dir(batch_id)
+            if (batch_dir_resolved / "archive.json").exists():
+                import importlib
+                # Just read evidence from last run if available
+                pass
+    except Exception:
+        pass
+
+    return {
+        "runs": runs,
+        "total_runs": len(runs),
+        "last_run": runs[-1] if runs else None,
+        "current_generation": current_gen,
+        "next_run_generation": next_run_gen,
+        "frequency": frequency,
+    }
+
+
+def get_settings_lazy():
+    """Lazy settings loader to avoid import at module level."""
+    from config import get_settings
+    return get_settings()
 
 
 def get_live() -> dict:

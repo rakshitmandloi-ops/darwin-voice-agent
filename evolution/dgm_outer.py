@@ -211,7 +211,18 @@ async def run_evolution(
             # 5. Meta-eval hook
             if meta_eval_fn and gen > 0 and gen % s.meta_eval.frequency == 0:
                 logger.info(f"  Running meta-eval at generation {gen}")
+                try:
+                    from live_state import get_live_state as _gls
+                    _gls().set_promoting("meta-eval", f"Running meta-evaluation at Gen {gen}...")
+                except Exception:
+                    pass
+                old_version = eval_config.version_id
                 eval_config = await meta_eval_fn(archive, eval_config, tracker, s)
+                changed = eval_config.version_id != old_version
+                try:
+                    _gls().set_promoting("meta-eval", f"Meta-eval {'APPLIED changes' if changed else 'no changes'} (gen {gen})")
+                except Exception:
+                    pass
 
             # 6. Termination checks
             current_best = archive.get_best().mean_score
