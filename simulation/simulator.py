@@ -103,10 +103,6 @@ async def _run_agent_conversation(
         )
         agent_text = agent_response.choices[0].message.content or ""
 
-        # Track tokens
-        msg_tokens = count_tokens(agent_text) + 4
-        current_tokens += msg_tokens
-
         agent_messages.append({"role": "assistant", "content": agent_text})
         transcript_messages.append(Message(role="assistant", content=agent_text))
 
@@ -124,10 +120,6 @@ async def _run_agent_conversation(
         if _is_conversation_ending(agent_text):
             break
 
-        # Check budget before borrower turn
-        if current_tokens + response_reserve >= total_budget:
-            break
-
         # --- Borrower turn ---
         if turn < max_turns - 1:
             borrower_response = await tracker.tracked_completion(
@@ -138,10 +130,6 @@ async def _run_agent_conversation(
                 metadata={"persona": persona.name, "turn": turn, "seed": seed},
             )
             borrower_text = borrower_response.choices[0].message.content or ""
-
-            # Track tokens (borrower message goes into agent's context)
-            msg_tokens = count_tokens(borrower_text) + 4
-            current_tokens += msg_tokens
 
             borrower_messages.append({"role": "assistant", "content": borrower_text})
             transcript_messages.append(Message(role="user", content=borrower_text))
@@ -160,10 +148,7 @@ async def _run_agent_conversation(
     # Log final token usage
     final_usage = {
         "agent": agent_type.value,
-        "total_tokens_used": current_tokens,
-        "budget": total_budget,
         "turns_completed": len([m for m in transcript_messages if m.role == "assistant"]),
-        "within_budget": current_tokens <= total_budget,
     }
     log_token_usage(final_usage, settings)
 
