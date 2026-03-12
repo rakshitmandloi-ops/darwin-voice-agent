@@ -1,0 +1,2213 @@
+[
+  {
+    "window": 1,
+    "convos_range": "0-24",
+    "num_convos": 24,
+    "prompt_tokens": 7990,
+    "findings": [
+      "The 'concise' criterion for both agent2 and agent3 is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'appropriate_response' criterion for agent1 is failing at 0%, but the responses seem contextually appropriate given the nature of the conversations. This indicates a potential miscalibration of this criterion.",
+      "The 'consequence_driven_tone' criterion for agent3 is failing at 0%, yet the agents are clearly communicating consequences in the conversations. This suggests a miscalibration of this criterion."
+    ],
+    "proposed_weights": {
+      "quality/agent2/concise": 0.1,
+      "quality/agent3/concise": 0.1,
+      "quality/agent1/appropriate_response": 0.1,
+      "goal/agent3/consequence_driven_tone": 0.1
+    },
+    "confidence": "high",
+    "rationale": "The consistent failure of certain criteria across multiple conversations, despite evidence to the contrary in the transcripts, indicates a clear miscalibration. Adjusting the scoring weights for these criteria will better reflect their actual performance and importance.",
+    "score_impact": {
+      "old_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "new_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "old_mean_score": 6.612,
+      "new_mean_score": 6.331,
+      "score_diff": -0.282,
+      "per_variant": {
+        "v0": {
+          "old": 6.78,
+          "new": 6.55,
+          "diff": -0.23
+        },
+        "v0_0_cb8e": {
+          "old": 6.75,
+          "new": 6.47,
+          "diff": -0.28
+        },
+        "v0_1_f082": {
+          "old": 6.55,
+          "new": 6.29,
+          "diff": -0.26
+        },
+        "v0_3_87bb": {
+          "old": 6.92,
+          "new": 6.62,
+          "diff": -0.3
+        },
+        "v1_0_929a": {
+          "old": 5.78,
+          "new": 5.69,
+          "diff": -0.09
+        },
+        "v1_2_3412": {
+          "old": 5.35,
+          "new": 5.1,
+          "diff": -0.25
+        },
+        "v1_3_beba": {
+          "old": 5.4,
+          "new": 5.13,
+          "diff": -0.28
+        },
+        "v2_0_5ff4": {
+          "old": 6.13,
+          "new": 6.04,
+          "diff": -0.09
+        },
+        "v2_1_c197": {
+          "old": 6.96,
+          "new": 6.66,
+          "diff": -0.3
+        },
+        "v2_2_f5ed": {
+          "old": 7.17,
+          "new": 6.87,
+          "diff": -0.29
+        },
+        "v2_3_bcc4": {
+          "old": 6.85,
+          "new": 6.55,
+          "diff": -0.31
+        },
+        "v3_0_7208": {
+          "old": 7.31,
+          "new": 7.0,
+          "diff": -0.32
+        },
+        "v3_2_4d6c": {
+          "old": 6.19,
+          "new": 6.09,
+          "diff": -0.1
+        },
+        "v3_3_f7d2": {
+          "old": 6.42,
+          "new": 6.31,
+          "diff": -0.11
+        },
+        "v4_0_9cbd": {
+          "old": 6.83,
+          "new": 6.52,
+          "diff": -0.3
+        },
+        "v4_1_1717": {
+          "old": 6.76,
+          "new": 6.53,
+          "diff": -0.22
+        },
+        "v4_2_1b85": {
+          "old": 6.79,
+          "new": 6.55,
+          "diff": -0.24
+        },
+        "v4_3_7488": {
+          "old": 6.89,
+          "new": 6.6,
+          "diff": -0.28
+        },
+        "v5_0_bc9f": {
+          "old": 7.13,
+          "new": 6.83,
+          "diff": -0.3
+        },
+        "v5_1_475c": {
+          "old": 5.82,
+          "new": 5.55,
+          "diff": -0.27
+        },
+        "v5_2_d583": {
+          "old": 6.7,
+          "new": 6.46,
+          "diff": -0.24
+        },
+        "v5_3_0847": {
+          "old": 4.92,
+          "new": 4.85,
+          "diff": -0.07
+        },
+        "v6_0_8046": {
+          "old": 7.06,
+          "new": 6.76,
+          "diff": -0.31
+        },
+        "v6_1_221d": {
+          "old": 6.17,
+          "new": 6.07,
+          "diff": -0.1
+        },
+        "v6_2_8427": {
+          "old": 6.86,
+          "new": 6.53,
+          "diff": -0.33
+        },
+        "v6_3_823b": {
+          "old": 5.93,
+          "new": 5.83,
+          "diff": -0.1
+        },
+        "v7_0_82c4": {
+          "old": 6.97,
+          "new": 6.64,
+          "diff": -0.33
+        },
+        "v7_1_6a33": {
+          "old": 6.39,
+          "new": 6.29,
+          "diff": -0.1
+        },
+        "v7_2_a60f": {
+          "old": 6.96,
+          "new": 6.65,
+          "diff": -0.31
+        },
+        "v7_3_9e24": {
+          "old": 7.07,
+          "new": 6.77,
+          "diff": -0.3
+        },
+        "v8_1_eb87": {
+          "old": 5.22,
+          "new": 4.9,
+          "diff": -0.31
+        },
+        "v8_3_fe63": {
+          "old": 5.66,
+          "new": 5.39,
+          "diff": -0.26
+        }
+      }
+    },
+    "applied": true
+  },
+  {
+    "window": 2,
+    "convos_range": "12-35",
+    "num_convos": 23,
+    "prompt_tokens": 8474,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations do not show obvious issues with re-verification or incoherent continuation, indicating potential miscalibration.",
+      "The 'goal/agent3/consequence_driven_tone' criterion is failing at 4.3%, yet the conversations show attempts to convey consequences, suggesting this criterion might be too strict."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across multiple agents suggests a potential issue with its calibration. Similarly, the system criteria failing at 0% without clear evidence of issues in the conversations indicate possible miscalibration. Adjusting the scoring weights to increase the emphasis on quality and decrease the emphasis on system criteria could help address these discrepancies.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 3,
+    "convos_range": "23-47",
+    "num_convos": 24,
+    "prompt_tokens": 8066,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, indicating potential issues with how these criteria are being evaluated. The conversations do not show obvious signs of incoherence or repeated verification requests that would justify such low scores.",
+      "The 'system/borrower_no_seam' criterion is also failing at 0%, but the conversations do not exhibit clear issues with seamless transitions between agents, suggesting a possible miscalibration.",
+      "The 'goal/agent2/handles_objections' criterion is passing at only 8.3%, yet the agents appear to address borrower objections in the sample conversations. This may indicate that the criterion is too stringent or not aligned with realistic conversational dynamics."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite conversations not being overly verbose, suggests a miscalibration. Similarly, the system criteria failing at 0% without clear evidence of issues in the conversations indicates potential evaluation flaws. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' reflects the need to address these misalignments.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 4,
+    "convos_range": "35-60",
+    "num_convos": 25,
+    "prompt_tokens": 8165,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations do not show obvious issues with re-verification or incoherent continuation, indicating potential miscalibration.",
+      "The 'goal/agent2/handles_objections' criterion is failing at 8%, yet agents are attempting to handle objections, suggesting this criterion might be too strict.",
+      "The 'handoff/handoff_1/stop_contact_noted' and 'handoff/handoff_2/stop_contact_noted' criteria are failing at 4%, but the conversations do not show clear failures in noting stop contact requests, indicating potential miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite conversations not being overly verbose, suggests a miscalibration. Similarly, the 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing without clear evidence of issues, indicating potential miscalibration. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 5,
+    "convos_range": "47-71",
+    "num_convos": 24,
+    "prompt_tokens": 8781,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'handles_objections' criterion for agent2 is failing at 0%, but the agents are attempting to address borrower concerns and objections, indicating that this criterion might be too harsh or not accurately capturing the agent's efforts.",
+      "The 'stop_contact_noted' criterion for handoff is failing at 0%, yet there are instances where agents acknowledge the borrower's request to speak to a supervisor or to stop the conversation, suggesting this criterion might be miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "handoff": 0.2,
+      "system": 0.15,
+      "compliance": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' and 'handles_objections' criteria across all conversations suggests a potential miscalibration. Adjusting the scoring weights to give more emphasis to 'quality' and 'handoff' could help balance the evaluation, as these areas seem to be more reflective of the agents' performance in handling borrower interactions.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 6,
+    "convos_range": "59-83",
+    "num_convos": 24,
+    "prompt_tokens": 9395,
+    "findings": [
+      "The 'concise' criterion is failing at 0% for agent2 and agent3, and near-floor for agent1, yet the conversations do not exhibit excessive verbosity or unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'handles_objections' criterion for agent2 is failing at 0%, but the conversations show attempts by agents to address borrower objections, indicating potential miscalibration.",
+      "The 'no_re_introductions' and 'no_re_verification' criteria are failing at 0%, yet the conversations do not show repeated introductions or verification requests beyond what is necessary, suggesting these criteria may be too strict.",
+      "The 'coherent_continuation' criterion is failing at 0%, but the conversations generally maintain coherence, indicating potential miscalibration.",
+      "The 'borrower_no_seam' criterion is failing at 0%, yet the transitions between agents do not appear to be problematic, suggesting this criterion may be too strict.",
+      "The 'appropriate_response' criterion for agent1 is near-floor, but the responses generally align with the context, indicating potential miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "system": 0.2,
+      "handoff": 0.15,
+      "compliance": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests potential miscalibration. Adjusting the scoring weights to give more emphasis to 'quality' and 'system' may help address these issues, as these areas seem to be more aligned with the actual conversation content.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 7,
+    "convos_range": "71-94",
+    "num_convos": 23,
+    "prompt_tokens": 9313,
+    "findings": [
+      "The 'concise' criterion for agent3 is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' criterion is failing at 0%, but the conversations show attempts to verify identity, indicating that the criterion might be too stringent or incorrectly applied.",
+      "The 'system/coherent_continuation' criterion is failing at 0%, yet the conversations generally maintain a logical flow, suggesting a potential miscalibration.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, but the transitions between agents and borrower responses seem coherent, indicating a possible issue with the criterion's calibration.",
+      "The 'goal/agent3/consequence_driven_tone' criterion is near-floor at 4.3%, but the conversations show agents attempting to communicate consequences, suggesting the criterion might be too harshly evaluated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The evaluation criteria for 'concise', 'system/no_re_verification', 'system/coherent_continuation', and 'system/borrower_no_seam' appear to be miscalibrated based on the conversation samples. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' could help balance the evaluation more accurately. The confidence is medium due to the limited sample size and potential variability in conversation contexts.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 8,
+    "convos_range": "82-104",
+    "num_convos": 22,
+    "prompt_tokens": 9487,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near-floor levels, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'consequence_driven_tone' for agent3 is failing at 0%, but the conversations show that agents are consistently informing borrowers about the consequences of non-payment. This indicates a potential miscalibration of this criterion.",
+      "The 'no_re_verification' and 'no_repeated_questions' criteria under 'system' are failing at 0%, yet the conversations do not show excessive repetition of verification requests or questions. This suggests these criteria might be too stringent or miscalibrated.",
+      "The 'coherent_continuation' under 'system' is failing at 0%, but the conversations appear to follow a logical flow. This indicates a potential miscalibration of this criterion.",
+      "The 'emotional_preserved' criteria under 'handoff' are at ceiling levels, suggesting they might be too lenient or not capturing the nuances of emotional preservation accurately."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "system": 0.2,
+      "handoff": 0.15,
+      "compliance": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests potential miscalibration. Adjusting the scoring weights to give more emphasis to 'quality' and 'goal' may help balance the evaluation, as these areas seem to be more critical in the context of the conversations. The confidence is medium due to the limited sample size and the potential for subjective interpretation of conversation quality.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 9,
+    "convos_range": "93-115",
+    "num_convos": 22,
+    "prompt_tokens": 9142,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations show attempts at coherent continuation and verification processes, indicating potential miscalibration.",
+      "The 'system/tone_progression' and 'handoff/handoff_1/emotional_preserved' criteria are passing at near 100%, which might indicate these criteria are too lenient or not capturing nuanced failures."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents suggests a potential issue with its calibration, as the conversations do not exhibit excessive verbosity. Similarly, the system criteria failing at 0% despite evidence of attempts at coherence and verification indicate possible miscalibration. Adjusting the scoring weights to slightly increase the emphasis on quality and decrease the emphasis on system criteria may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 10,
+    "convos_range": "104-127",
+    "num_convos": 23,
+    "prompt_tokens": 9208,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations show attempts at maintaining coherence and continuity, indicating potential miscalibration.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, yet the transitions between agents seem reasonably seamless, suggesting a possible issue with the criterion.",
+      "The 'goal/agent2/handles_objections' criterion is near-floor at 4.3%, but agents are seen addressing borrower objections, indicating a potential misalignment in evaluation.",
+      "The 'quality/agent2/no_repetition' criterion is near-floor at 4.3%, but there is no significant repetition observed in the conversations, suggesting a possible miscalibration."
+    ],
+    "proposed_weights": {
+      "quality/agent1/concise": 0.1,
+      "quality/agent2/concise": 0.1,
+      "quality/agent3/concise": 0.1,
+      "system/no_re_verification": 0.1,
+      "system/coherent_continuation": 0.1,
+      "system/borrower_no_seam": 0.1,
+      "goal/agent2/handles_objections": 0.1,
+      "quality/agent2/no_repetition": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite conversations not being overly verbose, suggests a miscalibration. Similarly, the failure of system-related criteria that should logically pass based on the conversation flow indicates potential issues with these criteria. Adjusting the scoring weights for these criteria could help address these discrepancies.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 11,
+    "convos_range": "115-138",
+    "num_convos": 23,
+    "prompt_tokens": 9663,
+    "findings": [
+      "The 'concise' criterion for agent1 and agent2 is failing at 0% and near-floor levels, yet the conversations do not exhibit excessive verbosity or unnecessary repetition, indicating a potential miscalibration of this criterion.",
+      "The 'no_re_introductions' and 'no_re_verification' criteria under 'system' are failing at 0%, but the conversations do not show repeated introductions or verification requests, suggesting these criteria might be too strict or miscalibrated.",
+      "The 'coherent_continuation' criterion under 'system' is failing at 0%, yet the conversations appear to maintain coherence, indicating a potential issue with the criterion's calibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests a potential miscalibration. Adjusting the scoring weights to reduce the impact of potentially flawed criteria while increasing the weight of 'quality' could provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 12,
+    "convos_range": "126-149",
+    "num_convos": 23,
+    "prompt_tokens": 8661,
+    "findings": [
+      "The 'concise' criterion for agent1, agent2, and agent3 is failing at 0% or near-floor levels, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'no_repetition' criterion for agent2 is failing at 0%, but the conversations do not show excessive repetition beyond what might be expected in a typical customer service interaction. This indicates potential miscalibration.",
+      "The 'no_re_verification' and 'coherent_continuation' criteria under 'system' are failing at 0%, yet the conversations show attempts at maintaining coherence and logical flow. This suggests these criteria might be too stringent or not accurately capturing the intended issues.",
+      "The 'handles_objections' criterion for agent2 is near-floor, but the agents are attempting to address borrower objections, indicating potential miscalibration.",
+      "The 'consequence_driven_tone' for agent3 is near-floor, yet agents are communicating consequences, suggesting this criterion might be too strict.",
+      "The 'no_re_introductions' and 'no_repeated_questions' criteria under 'system' are near-floor, but the conversations do not show excessive re-introductions or repeated questions, indicating potential miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The evaluation criteria for 'concise', 'no_repetition', 'no_re_verification', and 'coherent_continuation' appear to be miscalibrated based on the conversation transcripts. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' may help address these discrepancies. The confidence is medium due to the subjective nature of evaluating conversational quality and the potential for variability in interpretation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 13,
+    "convos_range": "137-161",
+    "num_convos": 24,
+    "prompt_tokens": 8726,
+    "findings": [
+      "The 'concise' criterion for agents 1, 2, and 3 is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'handles_objections' criterion for agent 2 is failing at 0%, but the conversations show attempts by the agent to address borrower objections, indicating potential miscalibration.",
+      "The 'coherent_continuation' and 'borrower_no_seam' system criteria are failing at 0%, yet the conversations do not show obvious incoherence or disjointed transitions, suggesting these criteria may be too harshly evaluated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "system": 0.2,
+      "handoff": 0.15,
+      "compliance": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests potential miscalibration. Adjusting the scoring weights to give more balance between quality, goal, and system criteria may help address these issues. The confidence is medium due to the limited sample size and lack of detailed context on the evaluation process.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 14,
+    "convos_range": "149-172",
+    "num_convos": 23,
+    "prompt_tokens": 8182,
+    "findings": [
+      "The 'concise' criterion for agent1, agent2, and agent3 is failing at 0% or near-floor levels, yet the conversations do not exhibit excessive verbosity or unnecessary information. This suggests that the 'concise' criterion may be miscalibrated.",
+      "The 'handles_objections' criterion for agent2 is failing at 0%, but the agents are attempting to address borrower objections, indicating potential miscalibration.",
+      "The 'no_re_introductions', 'no_re_verification', and 'no_repeated_questions' system criteria are failing at 0%, yet the conversations do not show repeated introductions or verifications, suggesting these criteria may be too strict or miscalibrated.",
+      "The 'coherent_continuation' and 'borrower_no_seam' system criteria are failing at 0%, but the conversations appear to maintain coherence and flow, indicating potential miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests potential miscalibration. Adjusting the scoring weights to reduce the impact of potentially miscalibrated criteria like 'system' and increasing the weight of 'quality' could provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 15,
+    "convos_range": "160-184",
+    "num_convos": 24,
+    "prompt_tokens": 7705,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near-floor levels, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system' criteria such as 'no_re_introductions', 'no_re_verification', 'no_repeated_questions', and 'coherent_continuation' are all failing at 0%. This indicates a potential issue with how these criteria are being evaluated, as the conversations do not show obvious signs of these issues.",
+      "The 'goal/agent2/handles_objections' and 'goal/agent3/consequence_driven_tone' criteria are near-floor, yet the conversations show attempts by agents to handle objections and convey consequences, suggesting these criteria might be too stringent.",
+      "The 'system/borrower_no_seam' criterion is near-floor, but the conversations do not exhibit clear issues with seamless transitions, indicating a possible miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1,
+      "goal": 0.25,
+      "handoff": 0.2,
+      "compliance": 0.2
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests a systemic issue with the evaluation process rather than the conversations themselves. Adjusting the scoring weights to reduce the impact of potentially miscalibrated criteria and increase the weight of 'quality' and 'handoff' may provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 16,
+    "convos_range": "172-196",
+    "num_convos": 24,
+    "prompt_tokens": 7878,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, which suggests a miscalibration. The conversations do not appear excessively verbose or filled with unnecessary information, indicating that the criterion might be too strict or incorrectly applied.",
+      "The 'system/no_re_introductions', 'system/no_re_verification', and 'system/no_repeated_questions' criteria are failing at 0%, which is unusual. The transcripts do not show excessive re-introductions, re-verifications, or repeated questions, suggesting these criteria might be miscalibrated.",
+      "The 'system/coherent_continuation' criterion is failing at 0%, which is concerning. The conversations appear to follow a logical flow, indicating that this criterion might be too stringent or incorrectly applied."
+    ],
+    "proposed_weights": {
+      "quality/agent2/concise": 0.15,
+      "quality/agent3/concise": 0.15,
+      "system/no_re_introductions": 0.1,
+      "system/no_re_verification": 0.1,
+      "system/no_repeated_questions": 0.1,
+      "system/coherent_continuation": 0.1
+    },
+    "confidence": "high",
+    "rationale": "The consistent 0% pass rates across multiple criteria suggest a systemic issue with the evaluation process rather than the conversations themselves. Adjusting the scoring weights for these criteria will help ensure a more balanced evaluation that reflects the actual quality of the conversations.",
+    "score_impact": {
+      "old_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "new_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "old_mean_score": 6.612,
+      "new_mean_score": 6.331,
+      "score_diff": -0.282,
+      "per_variant": {
+        "v0": {
+          "old": 6.78,
+          "new": 6.55,
+          "diff": -0.23
+        },
+        "v0_0_cb8e": {
+          "old": 6.75,
+          "new": 6.47,
+          "diff": -0.28
+        },
+        "v0_1_f082": {
+          "old": 6.55,
+          "new": 6.29,
+          "diff": -0.26
+        },
+        "v0_3_87bb": {
+          "old": 6.92,
+          "new": 6.62,
+          "diff": -0.3
+        },
+        "v1_0_929a": {
+          "old": 5.78,
+          "new": 5.69,
+          "diff": -0.09
+        },
+        "v1_2_3412": {
+          "old": 5.35,
+          "new": 5.1,
+          "diff": -0.25
+        },
+        "v1_3_beba": {
+          "old": 5.4,
+          "new": 5.13,
+          "diff": -0.28
+        },
+        "v2_0_5ff4": {
+          "old": 6.13,
+          "new": 6.04,
+          "diff": -0.09
+        },
+        "v2_1_c197": {
+          "old": 6.96,
+          "new": 6.66,
+          "diff": -0.3
+        },
+        "v2_2_f5ed": {
+          "old": 7.17,
+          "new": 6.87,
+          "diff": -0.29
+        },
+        "v2_3_bcc4": {
+          "old": 6.85,
+          "new": 6.55,
+          "diff": -0.31
+        },
+        "v3_0_7208": {
+          "old": 7.31,
+          "new": 7.0,
+          "diff": -0.32
+        },
+        "v3_2_4d6c": {
+          "old": 6.19,
+          "new": 6.09,
+          "diff": -0.1
+        },
+        "v3_3_f7d2": {
+          "old": 6.42,
+          "new": 6.31,
+          "diff": -0.11
+        },
+        "v4_0_9cbd": {
+          "old": 6.83,
+          "new": 6.52,
+          "diff": -0.3
+        },
+        "v4_1_1717": {
+          "old": 6.76,
+          "new": 6.53,
+          "diff": -0.22
+        },
+        "v4_2_1b85": {
+          "old": 6.79,
+          "new": 6.55,
+          "diff": -0.24
+        },
+        "v4_3_7488": {
+          "old": 6.89,
+          "new": 6.6,
+          "diff": -0.28
+        },
+        "v5_0_bc9f": {
+          "old": 7.13,
+          "new": 6.83,
+          "diff": -0.3
+        },
+        "v5_1_475c": {
+          "old": 5.82,
+          "new": 5.55,
+          "diff": -0.27
+        },
+        "v5_2_d583": {
+          "old": 6.7,
+          "new": 6.46,
+          "diff": -0.24
+        },
+        "v5_3_0847": {
+          "old": 4.92,
+          "new": 4.85,
+          "diff": -0.07
+        },
+        "v6_0_8046": {
+          "old": 7.06,
+          "new": 6.76,
+          "diff": -0.31
+        },
+        "v6_1_221d": {
+          "old": 6.17,
+          "new": 6.07,
+          "diff": -0.1
+        },
+        "v6_2_8427": {
+          "old": 6.86,
+          "new": 6.53,
+          "diff": -0.33
+        },
+        "v6_3_823b": {
+          "old": 5.93,
+          "new": 5.83,
+          "diff": -0.1
+        },
+        "v7_0_82c4": {
+          "old": 6.97,
+          "new": 6.64,
+          "diff": -0.33
+        },
+        "v7_1_6a33": {
+          "old": 6.39,
+          "new": 6.29,
+          "diff": -0.1
+        },
+        "v7_2_a60f": {
+          "old": 6.96,
+          "new": 6.65,
+          "diff": -0.31
+        },
+        "v7_3_9e24": {
+          "old": 7.07,
+          "new": 6.77,
+          "diff": -0.3
+        },
+        "v8_1_eb87": {
+          "old": 5.22,
+          "new": 4.9,
+          "diff": -0.31
+        },
+        "v8_3_fe63": {
+          "old": 5.66,
+          "new": 5.39,
+          "diff": -0.26
+        }
+      }
+    },
+    "applied": true
+  },
+  {
+    "window": 17,
+    "convos_range": "184-207",
+    "num_convos": 23,
+    "prompt_tokens": 8525,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'no_re_verification' and 'coherent_continuation' system criteria are failing at 0%, but the conversations show attempts to verify identity and maintain coherence, indicating potential miscalibration.",
+      "The 'appropriate_response' criterion for agent1 is failing at a near-floor rate, yet the responses seem contextually appropriate given the borrower's statements, suggesting a possible miscalibration."
+    ],
+    "proposed_weights": {
+      "quality/agent1/concise": 0.1,
+      "quality/agent2/concise": 0.1,
+      "quality/agent3/concise": 0.1,
+      "system/no_re_verification": 0.1,
+      "system/coherent_continuation": 0.1,
+      "quality/agent1/appropriate_response": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite conversations not being overly verbose, suggests a miscalibration. Similarly, the system criteria related to verification and coherence are failing despite evidence of attempts to verify and maintain coherence. Adjusting the scoring weights for these criteria can help balance the evaluation and reflect the actual performance more accurately.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 18,
+    "convos_range": "195-218",
+    "num_convos": 23,
+    "prompt_tokens": 9376,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, indicating a potential miscalibration. Conversations do not appear excessively verbose, suggesting that the criterion may be too strict or misaligned with the actual dialogue length.",
+      "The 'no_repetition' criterion for all agents is also failing at 0% or near 0%, which may indicate that the criterion is not accurately capturing repetition or is set too stringently.",
+      "The 'no_re_verification' and 'coherent_continuation' system criteria are failing at 0%, suggesting they may be miscalibrated or not applicable to the conversations in this window.",
+      "Several criteria are at 100% or near 100% pass rates, such as 'goal/agent1/ai_disclosure' and 'quality/agent1/professional', which may indicate these criteria are too lenient or not challenging enough."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of 'concise' and 'no_repetition' criteria across all agents suggests a potential issue with their calibration. Adjusting the scoring weights to increase the emphasis on quality may help address these issues. The high pass rates for certain criteria suggest they may not be effectively differentiating performance, warranting a slight reduction in their weight.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 19,
+    "convos_range": "206-228",
+    "num_convos": 22,
+    "prompt_tokens": 9665,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, which suggests that the evaluation may be too strict or miscalibrated. The conversations do not appear excessively verbose, indicating that the criterion might need adjustment.",
+      "The 'no_repetition' criterion for agent 3 is also failing at 0%, which may indicate that the evaluation is overly harsh or not accurately capturing the nature of the conversations.",
+      "The 'coherent_continuation' and 'borrower_no_seam' criteria under 'system' are failing at 0%, suggesting that these criteria might be too stringent or not properly aligned with the actual conversation flow."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations suggests potential miscalibration. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' may help balance the evaluation, given the observed issues with criteria like 'concise' and 'no_repetition'.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 20,
+    "convos_range": "217-239",
+    "num_convos": 22,
+    "prompt_tokens": 9671,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, which suggests that the conversations are not being evaluated correctly for conciseness. The transcripts do not show excessive verbosity or unnecessary repetition that would justify a 0% pass rate.",
+      "The 'no_re_verification' and 'no_repeated_questions' system checks are failing at 0%, yet the transcripts do not indicate repeated verification requests or questions that would warrant such a low pass rate.",
+      "The 'coherent_continuation' and 'borrower_no_seam' system checks are failing at 0%, but the conversations appear to follow a logical flow without abrupt or incoherent transitions."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent 0% pass rates across multiple criteria suggest a potential issue with the evaluation process rather than the conversations themselves. Adjusting the scoring weights to increase the emphasis on quality and decrease the emphasis on system checks may help address these discrepancies.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 21,
+    "convos_range": "228-252",
+    "num_convos": 24,
+    "prompt_tokens": 9565,
+    "findings": [
+      "The 'concise' criterion for agents 1, 2, and 3 is failing at or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/no_repeated_questions' criteria are failing at 0%, but the conversations do not show excessive repetition of verification requests or questions, indicating potential miscalibration.",
+      "The 'system/coherent_continuation' and 'system/borrower_no_seam' criteria are failing at 0%, yet the conversations seem to maintain coherence and logical flow, suggesting these criteria might be too stringent.",
+      "Several criteria are at 100% ceiling, such as 'goal/agent1/ai_disclosure', 'goal/agent1/recording_disclosure', and 'quality/agent1/professional', indicating these may be too lenient or not challenging enough."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of 'concise' and several 'system' criteria across all conversations suggests these criteria are miscalibrated. Adjusting the scoring weights to increase the impact of 'quality' and decrease 'system' may better reflect the actual performance observed in the conversations. The confidence is medium due to the need for further analysis to confirm these observations across more data.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 22,
+    "convos_range": "240-264",
+    "num_convos": 24,
+    "prompt_tokens": 9229,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, indicating potential miscalibration, as the conversations do not show obvious issues with re-verification or incoherent continuation.",
+      "The 'system/no_re_introductions' and 'system/borrower_no_seam' criteria are near-floor, suggesting they might be too strict or not accurately reflecting the conversation quality."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite conversations not being overly verbose, indicates a potential miscalibration. Similarly, the system criteria failing at floor or near-floor levels suggest they may not be accurately assessing the conversations. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' could better reflect the actual conversation quality.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 23,
+    "convos_range": "252-275",
+    "num_convos": 23,
+    "prompt_tokens": 8896,
+    "findings": [
+      "The 'concise' criterion is failing at 0% for agent3 and near-floor for agent1 and agent2, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations do not show obvious issues with re-verification or incoherent continuation. This indicates potential miscalibration of these criteria.",
+      "The 'appropriate_response' criterion is near-floor for agent1, yet the responses seem contextually appropriate given the nature of the conversations. This suggests a possible miscalibration of this criterion.",
+      "The 'no_re_introductions' criterion is near-floor, but the conversations do not show excessive re-introductions. This may indicate a miscalibration of this criterion."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The evaluation data shows several criteria at floor or near-floor levels without clear evidence from the conversations to justify such low scores. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' may help address potential miscalibrations in these criteria.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 24,
+    "convos_range": "263-285",
+    "num_convos": 22,
+    "prompt_tokens": 8845,
+    "findings": [
+      "The 'goal/agent1/identity_verification' criterion is failing at 0%, yet in several conversations, the agent attempts to verify identity multiple times, indicating that the criterion might be too strict or miscalibrated.",
+      "The 'quality/agent1/no_repetition' criterion is failing at 0%, but the transcripts show that repetition is often due to the borrower's refusal to provide information, suggesting that the criterion might not account for context.",
+      "The 'quality/agent1/appropriate_response' criterion is failing at 0%, yet the agents are responding appropriately to the borrower's objections and concerns, indicating a potential miscalibration.",
+      "The 'goal/agent2/handles_objections' criterion is failing at 0%, but agents are acknowledging and addressing borrower objections, suggesting the criterion might be too strict.",
+      "The 'quality/agent3/concise' criterion is failing at 0%, but the agent responses are generally concise, indicating a potential issue with the criterion.",
+      "The 'system/no_re_verification' and 'system/no_repeated_questions' criteria are failing at 0%, yet the agents are following a structured process that requires repeated verification attempts, suggesting these criteria might not be applicable in this context.",
+      "The 'system/coherent_continuation' criterion is failing at 0%, but the conversations generally follow a logical flow, indicating a potential miscalibration."
+    ],
+    "proposed_weights": {
+      "goal": 0.25,
+      "compliance": 0.2,
+      "quality": 0.25,
+      "handoff": 0.15,
+      "system": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The evaluation criteria appear to be miscalibrated, particularly in the context of identity verification and handling objections, where agents are performing actions that should meet the criteria but are still failing. Adjusting the scoring weights to give more balance between 'goal' and 'quality' may help address these discrepancies.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 25,
+    "convos_range": "274-296",
+    "num_convos": 22,
+    "prompt_tokens": 9306,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near-floor levels, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be miscalibrated.",
+      "The 'appropriate_response' criterion for agent1 is failing at 0%, but the responses seem contextually appropriate given the nature of the conversations. This indicates a potential miscalibration of this criterion.",
+      "The 'handles_objections' criterion for agent2 is failing at 0%, yet the agent attempts to address borrower objections, suggesting this criterion may be too strict or miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality/agent1/concise": 0.1,
+      "quality/agent1/appropriate_response": 0.1,
+      "goal/agent2/handles_objections": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across multiple conversations, despite evidence of appropriate behavior, suggests miscalibration. Adjusting the scoring weights for these criteria can help balance the evaluation system.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 26,
+    "convos_range": "285-310",
+    "num_convos": 25,
+    "prompt_tokens": 8193,
+    "findings": [
+      "The 'concise' criterion is failing at 0% for all agents, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'handles_objections' criterion for agent2 is failing at 0%, but the agents are attempting to address borrower concerns, indicating that the criterion might be too stringent or not aligned with the actual conversation dynamics.",
+      "The 'no_re_verification' and 'no_repeated_questions' criteria are failing at 0%, yet the conversations show agents attempting to verify identity and clarify information, which is a necessary part of the process. This suggests these criteria might be miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "system": 0.1,
+      "handoff": 0.2,
+      "compliance": 0.2
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across all conversations suggests a potential misalignment between the evaluation criteria and the actual conversation content. Adjusting the scoring weights to give more emphasis to 'quality' and 'handoff' may better reflect the importance of these aspects in the conversations, while reducing the weight of 'system' which seems overly penalized for necessary verification processes.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 27,
+    "convos_range": "297-321",
+    "num_convos": 24,
+    "prompt_tokens": 8023,
+    "findings": [
+      "The 'concise' criterion for agents 1, 2, and 3 is failing at 0%, indicating a potential miscalibration. The conversations do not appear excessively verbose, suggesting that the criterion may be too strict or incorrectly applied.",
+      "The 'handles_objections' criterion for agent 2 is failing at 0%, which may indicate that the criterion is not accurately capturing the agent's ability to address borrower objections, as the conversations show attempts to address borrower concerns.",
+      "The 'coherent_continuation' and 'borrower_no_seam' system criteria are failing at 0%, which may suggest that these criteria are not well-defined or are being applied too stringently, as the conversations do not show obvious incoherence or disjointed transitions."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "system": 0.2,
+      "handoff": 0.15,
+      "compliance": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across multiple agents suggests a potential issue with its calibration. Similarly, the 'handles_objections' criterion for agent 2 may not be accurately reflecting the agent's performance, as the conversations show attempts to address objections. The system criteria related to coherence and seamless transitions also appear miscalibrated, as the conversations do not exhibit significant issues in these areas. Adjusting the scoring weights to give more emphasis to quality and goal criteria may help balance the evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 28,
+    "convos_range": "309-332",
+    "num_convos": 23,
+    "prompt_tokens": 8529,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'handles_objections' criterion for agent2 is failing at 0%, but in the sample conversations, agent2 attempts to address borrower objections, indicating that the criterion might be too stringent or not accurately capturing the agent's efforts.",
+      "The 'no_re_introductions' and 'no_re_verification' system criteria are failing at 0%, yet the conversations do not show repeated introductions or verifications beyond what is necessary for the flow of the conversation. This suggests these criteria might be miscalibrated.",
+      "The 'coherent_continuation' and 'borrower_no_seam' system criteria are failing at 0%, but the conversations appear to maintain coherence and continuity, indicating potential miscalibration of these criteria."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "handoff": 0.2,
+      "system": 0.2,
+      "compliance": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across all conversations suggests potential miscalibration. Adjusting the scoring weights to give more balance between quality, goal, handoff, and system criteria may provide a more accurate reflection of the conversations' performance. The confidence is medium due to the limited sample size and the need for further analysis to confirm these findings.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 29,
+    "convos_range": "320-343",
+    "num_convos": 23,
+    "prompt_tokens": 8851,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_introductions', 'system/no_re_verification', 'system/coherent_continuation', and 'system/borrower_no_seam' criteria are all failing at 0%, indicating potential miscalibration as these are fundamental system checks that should not universally fail unless there is a systemic issue.",
+      "The 'goal/agent2/handles_objections' criterion is near-floor at 4.3%, which may indicate that the criterion is too strict or not well-defined, as handling objections is a common task in these conversations."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' and several 'system' criteria across all conversations suggests a miscalibration rather than a genuine issue with the conversations themselves. Adjusting the scoring weights to reduce the impact of potentially miscalibrated criteria will provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 30,
+    "convos_range": "331-354",
+    "num_convos": 23,
+    "prompt_tokens": 8924,
+    "findings": [
+      "The 'concise' criteria for agents 1, 2, and 3 are failing at or near 0%, indicating a potential miscalibration. The conversations do not appear excessively verbose, suggesting that the criteria might be too strict or not appropriately defined.",
+      "The 'system/no_re_introductions' and 'system/no_re_verification' criteria are failing at 0%, which might indicate that the system is not recognizing valid reasons for re-introductions or re-verifications, especially in cases where the borrower is skeptical or combative.",
+      "The 'system/coherent_continuation' and 'system/borrower_no_seam' criteria are also failing at 0%, suggesting that the system might not be accurately assessing the flow and continuity of the conversation, particularly in challenging interactions.",
+      "The 'goal/agent2/handles_objections' and 'goal/agent3/consequence_driven_tone' criteria have low pass rates, which might indicate that the criteria are not well-aligned with the actual conversational dynamics, especially in handling borrower objections and maintaining a consequence-driven tone."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criteria across all agents suggests a systemic issue with how conciseness is evaluated. Similarly, the system-related criteria failing at 0% indicate potential misalignment with the actual conversation flow. Adjusting the scoring weights to increase the emphasis on quality and slightly reduce the emphasis on system criteria could help address these issues, as quality seems to be a more reliable indicator of conversation effectiveness in this context.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 31,
+    "convos_range": "342-365",
+    "num_convos": 23,
+    "prompt_tokens": 8192,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, indicating potential issues with how these criteria are being evaluated, as the conversations do not show clear signs of incoherence or repeated verification requests.",
+      "The 'system/borrower_no_seam' criterion is also failing at 0%, which may indicate a misalignment in the evaluation process, as the transitions between agents do not appear to be particularly jarring or problematic.",
+      "The 'goal/agent2/handles_objections' and 'goal/agent3/consequence_driven_tone' criteria are near-floor, suggesting that these criteria might be too harshly evaluated given the context of the conversations, where agents are attempting to handle objections and convey consequences appropriately."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite the absence of excessive verbosity, indicates a potential miscalibration. Similarly, the system criteria failing at 0% suggest issues with evaluation rather than actual performance. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' reflects the need to address these evaluation discrepancies.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 32,
+    "convos_range": "353-376",
+    "num_convos": 23,
+    "prompt_tokens": 8161,
+    "findings": [
+      "The 'quality/agent1/no_repetition' criterion is failing at 0%, yet the conversations show agents repeating information multiple times, indicating that the criterion might be too strict or miscalibrated.",
+      "The 'quality/agent2/concise' and 'quality/agent3/concise' criteria are failing at 0%, but the conversations do not appear excessively verbose, suggesting these criteria might be too stringent.",
+      "The 'goal/agent3/consequence_driven_tone' criterion is failing at 0%, yet agents are consistently emphasizing consequences, indicating a potential miscalibration.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations generally maintain coherence and logical flow, suggesting these criteria might be miscalibrated.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, yet the transitions between agents and borrower responses appear seamless, indicating a potential miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "goal": 0.25,
+      "system": 0.2,
+      "handoff": 0.15,
+      "compliance": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across all conversations suggests potential miscalibration. Adjusting the scoring weights to give more emphasis to quality and goal criteria may help balance the evaluation, as these areas seem to be more critical in the context of the conversations provided.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 33,
+    "convos_range": "364-387",
+    "num_convos": 23,
+    "prompt_tokens": 9717,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at a near-floor rate of 4.3%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification', 'system/coherent_continuation', and 'system/borrower_no_seam' criteria are all failing at 0%, indicating a potential issue with these criteria being too stringent or not applicable in the context of these conversations.",
+      "The 'goal/agent3/consequence_driven_tone' criterion is failing at a near-floor rate of 4.3%, but the conversations show that agents are consistently discussing consequences, suggesting this criterion might be miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The low pass rates for 'concise' and several system criteria suggest these are too strict or not well-suited to the conversation context. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' may better reflect the actual performance and importance of these criteria.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 34,
+    "convos_range": "375-398",
+    "num_convos": 23,
+    "prompt_tokens": 9051,
+    "findings": [
+      "The 'concise' criteria for all agents are failing at or near floor levels, indicating that the conversations are not being evaluated as concise. However, the sample conversations do not appear excessively verbose or filled with unnecessary information, suggesting a potential miscalibration of this criterion.",
+      "The 'system/no_re_introductions' and 'system/no_re_verification' criteria are failing at floor levels, yet the sample conversations do not show repeated introductions or verifications beyond what is necessary for identity confirmation, indicating these criteria might be too strict or miscalibrated.",
+      "The 'system/coherent_continuation' and 'system/borrower_no_seam' criteria are failing at floor levels, but the conversations appear to maintain a logical flow and continuity, suggesting these criteria might be miscalibrated.",
+      "The 'goal/agent3/consequence_driven_tone' criterion is failing at a low rate, but the sample conversations show that agents are communicating consequences clearly, indicating this criterion might be too strict.",
+      "The 'goal/agent2/handles_objections' criterion is failing at a low rate, yet the agents are addressing borrower objections and concerns, suggesting this criterion might be miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The evaluation criteria for conciseness, system coherence, and handling objections appear miscalibrated based on the sample conversations. Adjusting the scoring weights to increase the emphasis on quality and decrease the emphasis on system criteria may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 35,
+    "convos_range": "386-409",
+    "num_convos": 23,
+    "prompt_tokens": 9641,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be miscalibrated.",
+      "The 'no_re_introductions', 'no_re_verification', and 'no_repeated_questions' criteria are failing at 0%, but the conversations do not show evidence of excessive re-introductions, re-verifications, or repeated questions, indicating potential miscalibration.",
+      "The 'coherent_continuation' and 'borrower_no_seam' criteria are failing at 0%, yet the conversations seem to maintain coherence and continuity, suggesting these criteria may be miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality/agent1/concise": 0.1,
+      "quality/agent2/concise": 0.1,
+      "quality/agent3/concise": 0.1,
+      "system/no_re_introductions": 0.1,
+      "system/no_re_verification": 0.1,
+      "system/no_repeated_questions": 0.1,
+      "system/coherent_continuation": 0.1,
+      "system/borrower_no_seam": 0.1
+    },
+    "confidence": "high",
+    "rationale": "The consistent 0% pass rates across multiple criteria suggest a systemic issue with the evaluation process rather than actual performance failures. Adjusting the scoring weights for these criteria will help ensure that the evaluation reflects the actual quality of the conversations more accurately.",
+    "score_impact": {
+      "old_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "new_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "old_mean_score": 6.612,
+      "new_mean_score": 6.331,
+      "score_diff": -0.282,
+      "per_variant": {
+        "v0": {
+          "old": 6.78,
+          "new": 6.55,
+          "diff": -0.23
+        },
+        "v0_0_cb8e": {
+          "old": 6.75,
+          "new": 6.47,
+          "diff": -0.28
+        },
+        "v0_1_f082": {
+          "old": 6.55,
+          "new": 6.29,
+          "diff": -0.26
+        },
+        "v0_3_87bb": {
+          "old": 6.92,
+          "new": 6.62,
+          "diff": -0.3
+        },
+        "v1_0_929a": {
+          "old": 5.78,
+          "new": 5.69,
+          "diff": -0.09
+        },
+        "v1_2_3412": {
+          "old": 5.35,
+          "new": 5.1,
+          "diff": -0.25
+        },
+        "v1_3_beba": {
+          "old": 5.4,
+          "new": 5.13,
+          "diff": -0.28
+        },
+        "v2_0_5ff4": {
+          "old": 6.13,
+          "new": 6.04,
+          "diff": -0.09
+        },
+        "v2_1_c197": {
+          "old": 6.96,
+          "new": 6.66,
+          "diff": -0.3
+        },
+        "v2_2_f5ed": {
+          "old": 7.17,
+          "new": 6.87,
+          "diff": -0.29
+        },
+        "v2_3_bcc4": {
+          "old": 6.85,
+          "new": 6.55,
+          "diff": -0.31
+        },
+        "v3_0_7208": {
+          "old": 7.31,
+          "new": 7.0,
+          "diff": -0.32
+        },
+        "v3_2_4d6c": {
+          "old": 6.19,
+          "new": 6.09,
+          "diff": -0.1
+        },
+        "v3_3_f7d2": {
+          "old": 6.42,
+          "new": 6.31,
+          "diff": -0.11
+        },
+        "v4_0_9cbd": {
+          "old": 6.83,
+          "new": 6.52,
+          "diff": -0.3
+        },
+        "v4_1_1717": {
+          "old": 6.76,
+          "new": 6.53,
+          "diff": -0.22
+        },
+        "v4_2_1b85": {
+          "old": 6.79,
+          "new": 6.55,
+          "diff": -0.24
+        },
+        "v4_3_7488": {
+          "old": 6.89,
+          "new": 6.6,
+          "diff": -0.28
+        },
+        "v5_0_bc9f": {
+          "old": 7.13,
+          "new": 6.83,
+          "diff": -0.3
+        },
+        "v5_1_475c": {
+          "old": 5.82,
+          "new": 5.55,
+          "diff": -0.27
+        },
+        "v5_2_d583": {
+          "old": 6.7,
+          "new": 6.46,
+          "diff": -0.24
+        },
+        "v5_3_0847": {
+          "old": 4.92,
+          "new": 4.85,
+          "diff": -0.07
+        },
+        "v6_0_8046": {
+          "old": 7.06,
+          "new": 6.76,
+          "diff": -0.31
+        },
+        "v6_1_221d": {
+          "old": 6.17,
+          "new": 6.07,
+          "diff": -0.1
+        },
+        "v6_2_8427": {
+          "old": 6.86,
+          "new": 6.53,
+          "diff": -0.33
+        },
+        "v6_3_823b": {
+          "old": 5.93,
+          "new": 5.83,
+          "diff": -0.1
+        },
+        "v7_0_82c4": {
+          "old": 6.97,
+          "new": 6.64,
+          "diff": -0.33
+        },
+        "v7_1_6a33": {
+          "old": 6.39,
+          "new": 6.29,
+          "diff": -0.1
+        },
+        "v7_2_a60f": {
+          "old": 6.96,
+          "new": 6.65,
+          "diff": -0.31
+        },
+        "v7_3_9e24": {
+          "old": 7.07,
+          "new": 6.77,
+          "diff": -0.3
+        },
+        "v8_1_eb87": {
+          "old": 5.22,
+          "new": 4.9,
+          "diff": -0.31
+        },
+        "v8_3_fe63": {
+          "old": 5.66,
+          "new": 5.39,
+          "diff": -0.26
+        }
+      }
+    },
+    "applied": true
+  },
+  {
+    "window": 36,
+    "convos_range": "397-420",
+    "num_convos": 23,
+    "prompt_tokens": 7948,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_introductions', 'system/no_re_verification', and 'system/no_repeated_questions' criteria are failing at 0%, indicating potential miscalibration, as the conversations do not show excessive repetition of introductions, verifications, or questions.",
+      "The 'system/coherent_continuation' and 'system/borrower_no_seam' criteria are failing at 0%, suggesting they may be too strict or not accurately capturing the coherence and flow of the conversations."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' and several 'system' criteria across all conversations suggests a miscalibration. Adjusting the scoring weights to reduce the impact of potentially flawed criteria will provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 37,
+    "convos_range": "408-431",
+    "num_convos": 23,
+    "prompt_tokens": 8349,
+    "findings": [
+      "The 'concise' criterion for agents 1, 2, and 3 is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_introductions', 'system/no_re_verification', 'system/no_repeated_questions', 'system/coherent_continuation', and 'system/borrower_no_seam' criteria are all failing at 0%, indicating a potential issue with how these criteria are being evaluated, as such a complete failure across multiple conversations is unlikely unless there is a systemic issue.",
+      "The 'goal/agent2/handles_objections' criterion is failing at near-floor levels, yet agents are attempting to address borrower objections, suggesting this criterion may be too harshly evaluated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite conversations not being overly verbose, indicates a miscalibration. Similarly, the complete failure of multiple system criteria suggests a potential systemic issue with evaluation rather than actual performance. Adjusting the scoring weights to increase the impact of 'quality' and decrease 'system' reflects the need to address these miscalibrations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 38,
+    "convos_range": "419-442",
+    "num_convos": 23,
+    "prompt_tokens": 7860,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, which suggests a miscalibration. The conversations do not appear excessively verbose or filled with unnecessary information, indicating that the criterion might be too strict or incorrectly applied.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are also failing at 0%. This suggests that these criteria might be too stringent or not appropriately aligned with the actual conversation flow, as the system seems to be functioning within expected parameters.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, which might indicate that the transitions between agents or system prompts are not being evaluated correctly, as the conversations do not show obvious disjointedness."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of 'concise' and several 'system' criteria at 0% suggests a misalignment between the evaluation criteria and the actual conversation content. Adjusting the scoring weights to increase the emphasis on 'quality' and decrease 'system' might better reflect the actual performance and importance of these aspects in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 39,
+    "convos_range": "430-454",
+    "num_convos": 24,
+    "prompt_tokens": 6838,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, which suggests a miscalibration. The conversations do not appear excessively verbose or filled with unnecessary information, indicating that the criterion might be too strict or incorrectly applied.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, which may indicate that these criteria are not being evaluated correctly or are too stringent, as the conversations do not show obvious issues with verification or coherence.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, suggesting a potential miscalibration, as the conversations do not exhibit clear issues with seamless transitions."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria across all conversations suggests a potential issue with the evaluation process or criteria definitions. Adjusting the scoring weights to reduce the impact of potentially miscalibrated criteria like 'system' and increasing 'quality' could provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 40,
+    "convos_range": "442-467",
+    "num_convos": 25,
+    "prompt_tokens": 6830,
+    "findings": [
+      "The 'concise' criterion is failing at 0% for agent3 and near-floor for agent1 and agent2, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_introductions', 'system/no_re_verification', 'system/coherent_continuation', and 'system/borrower_no_seam' criteria are all failing at 0%, indicating a potential issue with how these criteria are being evaluated or defined, as it is unlikely that all conversations fail these criteria completely."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across agents suggests a miscalibration, as the conversations do not exhibit excessive verbosity. Additionally, the complete failure of several system criteria indicates potential issues with their evaluation or definition. Adjusting the scoring weights to increase the emphasis on quality and decrease the emphasis on system criteria may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 41,
+    "convos_range": "454-477",
+    "num_convos": 23,
+    "prompt_tokens": 7883,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system' criteria such as 'no_re_introductions', 'no_re_verification', 'no_repeated_questions', and 'coherent_continuation' are all failing at 0%. This indicates a potential issue with how these criteria are being evaluated, as it is unlikely that all conversations fail these aspects completely.",
+      "The 'borrower_no_seam' criterion is also failing at 0%, which may suggest that the evaluation criteria are not aligned with the actual flow of the conversations.",
+      "The 'goal' and 'quality' criteria related to 'professional' and 'presents_payment_plan' are at a ceiling of 95.7% or 100%, indicating that these criteria might be too lenient or not capturing the nuances of the conversations."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of 'concise' and 'system' criteria across all conversations suggests a misalignment between the evaluation criteria and the actual conversation content. Adjusting the scoring weights to reduce the emphasis on 'system' and increase 'quality' could help balance the evaluation, given the apparent issues with the current criteria application.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 42,
+    "convos_range": "465-488",
+    "num_convos": 23,
+    "prompt_tokens": 8519,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are failing at 0%, but the conversations show attempts at maintaining coherence and continuity, indicating potential miscalibration.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, yet the transitions between agents seem reasonably seamless, suggesting a possible issue with the criterion's calibration."
+    ],
+    "proposed_weights": {
+      "quality/agent1/concise": 0.1,
+      "quality/agent2/concise": 0.1,
+      "quality/agent3/concise": 0.1,
+      "system/no_re_verification": 0.1,
+      "system/coherent_continuation": 0.1,
+      "system/borrower_no_seam": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' criterion across all agents, despite the conversations not being overly verbose, indicates a potential miscalibration. Similarly, the system criteria related to verification and coherence are failing universally, which suggests they may be too stringent or not aligned with the actual conversation flow. Adjusting the scoring weights for these criteria could provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 43,
+    "convos_range": "476-499",
+    "num_convos": 23,
+    "prompt_tokens": 7760,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'no_repetition' criterion for agent 3 is failing at 0%, but the conversations do not show clear signs of repetitive dialogue. This indicates a potential miscalibration of the 'no_repetition' criterion.",
+      "The 'coherent_continuation' and 'no_re_verification' system criteria are failing at 0%, yet the conversations seem to follow a logical flow and do not repeatedly verify identity unnecessarily. This suggests these criteria might be too stringent or miscalibrated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of certain criteria, despite conversations not exhibiting the issues these criteria are meant to address, indicates potential miscalibration. Adjusting the scoring weights to increase the influence of 'quality' and decrease 'system' may help balance the evaluation, given the observed issues.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 44,
+    "convos_range": "487-510",
+    "num_convos": 23,
+    "prompt_tokens": 7821,
+    "findings": [
+      "The 'concise' criterion for agents 2 and 3 is failing at 0%, which suggests that the conversations are not being evaluated correctly for conciseness. The transcripts do not show excessive verbosity or unnecessary information that would justify a 0% pass rate.",
+      "The 'system/no_re_verification' and 'system/coherent_continuation' criteria are also failing at 0%, indicating a potential issue with how these criteria are being applied. The conversations do not show repeated verification requests or incoherent transitions that would justify such a low pass rate."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent 0% pass rates for 'concise' and 'system' criteria suggest a misalignment in evaluation rather than a genuine issue with the conversations. Adjusting the scoring weights to reduce the impact of potentially flawed criteria will provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 45,
+    "convos_range": "498-521",
+    "num_convos": 23,
+    "prompt_tokens": 8367,
+    "findings": [
+      "The 'concise' criterion for all agents is failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_verification' and 'system/no_repeated_questions' criteria are failing at 0%, but the conversations do not show excessive repetition of verification requests or questions, indicating potential miscalibration.",
+      "The 'system/coherent_continuation' and 'system/borrower_no_seam' criteria are failing at 0%, yet the conversations seem to maintain coherence and logical flow, suggesting these criteria might be too stringent."
+    ],
+    "proposed_weights": {
+      "quality/agent1/concise": 0.1,
+      "quality/agent2/concise": 0.1,
+      "quality/agent3/concise": 0.1,
+      "system/no_re_verification": 0.1,
+      "system/no_repeated_questions": 0.1,
+      "system/coherent_continuation": 0.1,
+      "system/borrower_no_seam": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of the 'concise' and several 'system' criteria across all conversations suggests a potential issue with the evaluation criteria rather than the conversations themselves. Adjusting the scoring weights for these criteria could provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 46,
+    "convos_range": "509-532",
+    "num_convos": 23,
+    "prompt_tokens": 8953,
+    "findings": [
+      "The 'concise' criteria for all agents are failing at 0% or near 0%, yet the conversations do not appear excessively verbose or filled with unnecessary information. This suggests that the 'concise' criterion may be too strict or miscalibrated.",
+      "The 'system/no_re_introductions' and 'system/no_re_verification' criteria are failing at 0%, but the conversations show that agents are attempting to verify identity and proceed with the conversation. This indicates a potential miscalibration in these criteria.",
+      "The 'system/coherent_continuation' and 'system/borrower_no_seam' criteria are failing at 0%, yet the conversations seem to follow a logical flow. This suggests these criteria might be too stringent or not accurately capturing the conversation flow.",
+      "The 'goal/agent2/handles_objections' criterion is failing at near-floor levels, but agents are seen addressing borrower objections and concerns. This may indicate a misalignment in how this criterion is evaluated."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of 'concise' and several 'system' criteria across all conversations suggests a systemic issue with these criteria rather than with the conversations themselves. Adjusting the scoring weights to reduce the impact of potentially miscalibrated criteria will provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 47,
+    "convos_range": "520-544",
+    "num_convos": 24,
+    "prompt_tokens": 9344,
+    "findings": [
+      "The 'concise' criterion for agent3 is failing at 0%, yet the conversations do not appear to be excessively verbose or filled with unnecessary information. This suggests that the criterion may be too strict or miscalibrated.",
+      "The 'no_re_introductions', 'no_re_verification', 'coherent_continuation', and 'borrower_no_seam' system criteria are all failing at 0%. This indicates a potential issue with how these criteria are being evaluated, as it is unlikely that all conversations fail these aspects completely.",
+      "The 'appropriate_response' criterion for agent1 is near-floor at 4.2%, which seems inconsistent given that agents are generally responding to borrower queries and concerns, albeit with some repetition.",
+      "The 'handles_objections' criterion for agent2 is also near-floor at 4.2%, yet agents are attempting to address borrower objections, even if not always successfully.",
+      "The 'consequence_driven_tone' for agent3 is near-floor at 4.2%, but agents are consistently mentioning consequences of not resolving debts, indicating a potential miscalibration."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of multiple criteria suggests potential miscalibration rather than genuine performance issues. Adjusting the scoring weights to emphasize quality over system criteria may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 48,
+    "convos_range": "532-555",
+    "num_convos": 23,
+    "prompt_tokens": 9258,
+    "findings": [
+      "The 'quality/agent1/no_repetition' criterion is failing at 0%, yet the conversations do not exhibit significant repetition issues. The agents provide varied responses and adapt to the borrower's input.",
+      "The 'quality/agent1/appropriate_response' criterion is failing at 0%, but the agents generally provide responses that are contextually appropriate and relevant to the borrower's queries.",
+      "The 'quality/agent3/no_repetition' criterion is failing at 0%, similar to agent1, where there is no significant repetition observed in the agent's responses.",
+      "The 'quality/agent3/concise' criterion is failing at 0%, yet the agents' responses are generally concise and to the point, without unnecessary elaboration.",
+      "The 'system/no_re_introductions' criterion is failing at 0%, but the conversations do not show repeated introductions beyond the initial necessary context setting.",
+      "The 'system/no_re_verification' criterion is failing at 0%, yet the verification process is consistently handled without unnecessary repetition.",
+      "The 'system/coherent_continuation' criterion is failing at 0%, although the conversations maintain coherence and logical progression.",
+      "The 'system/borrower_no_seam' criterion is failing at 0%, but the transitions between agents are generally seamless and maintain the flow of conversation.",
+      "The 'goal/agent1/identity_verification' criterion is near-floor at 4.3%, yet the agents consistently attempt to verify identity as part of the process.",
+      "The 'goal/agent1/resolution_path' criterion is near-floor at 4.3%, but the agents do provide clear resolution paths in the conversations.",
+      "The 'quality/agent1/concise' criterion is near-floor at 4.3%, yet the agents' responses are concise and focused.",
+      "The 'goal/agent2/handles_objections' criterion is near-floor at 4.3%, but the agents handle objections and concerns raised by borrowers effectively.",
+      "The 'quality/agent2/no_repetition' criterion is near-floor at 4.3%, similar to agent1, where repetition is not a significant issue.",
+      "The 'quality/agent2/concise' criterion is near-floor at 4.3%, yet the agents' responses are concise and relevant.",
+      "The 'goal/agent3/consequence_driven_tone' criterion is near-floor at 4.3%, but the agents do employ a consequence-driven tone where appropriate.",
+      "The 'system/no_repeated_questions' criterion is near-floor at 4.3%, yet the agents do not repeat questions unnecessarily."
+    ],
+    "proposed_weights": {
+      "quality": 0.25,
+      "system": 0.1
+    },
+    "confidence": "high",
+    "rationale": "The evaluation criteria for quality and system aspects appear to be miscalibrated, as evidenced by the consistent failure rates despite the conversations demonstrating appropriate handling of repetition, conciseness, and coherence. Adjusting the scoring weights to increase the emphasis on quality and slightly reduce the emphasis on system criteria should better reflect the actual performance observed in the conversations.",
+    "score_impact": {
+      "old_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.2,
+        "handoff": 0.15,
+        "system": 0.15
+      },
+      "new_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.25,
+        "handoff": 0.15,
+        "system": 0.1
+      },
+      "old_mean_score": 6.612,
+      "new_mean_score": 6.418,
+      "score_diff": -0.195,
+      "per_variant": {
+        "v0": {
+          "old": 6.78,
+          "new": 6.67,
+          "diff": -0.11
+        },
+        "v0_0_cb8e": {
+          "old": 6.75,
+          "new": 6.57,
+          "diff": -0.18
+        },
+        "v0_1_f082": {
+          "old": 6.55,
+          "new": 6.37,
+          "diff": -0.18
+        },
+        "v0_3_87bb": {
+          "old": 6.92,
+          "new": 6.72,
+          "diff": -0.2
+        },
+        "v1_2_3412": {
+          "old": 5.35,
+          "new": 5.09,
+          "diff": -0.26
+        },
+        "v1_3_beba": {
+          "old": 5.4,
+          "new": 5.1,
+          "diff": -0.3
+        },
+        "v2_1_c197": {
+          "old": 6.96,
+          "new": 6.79,
+          "diff": -0.17
+        },
+        "v2_2_f5ed": {
+          "old": 7.17,
+          "new": 6.98,
+          "diff": -0.19
+        },
+        "v2_3_bcc4": {
+          "old": 6.85,
+          "new": 6.64,
+          "diff": -0.21
+        },
+        "v3_0_7208": {
+          "old": 7.31,
+          "new": 7.12,
+          "diff": -0.2
+        },
+        "v4_0_9cbd": {
+          "old": 6.83,
+          "new": 6.62,
+          "diff": -0.21
+        },
+        "v4_1_1717": {
+          "old": 6.76,
+          "new": 6.65,
+          "diff": -0.11
+        },
+        "v4_2_1b85": {
+          "old": 6.79,
+          "new": 6.66,
+          "diff": -0.13
+        },
+        "v4_3_7488": {
+          "old": 6.89,
+          "new": 6.72,
+          "diff": -0.17
+        },
+        "v5_0_bc9f": {
+          "old": 7.13,
+          "new": 6.94,
+          "diff": -0.18
+        },
+        "v5_1_475c": {
+          "old": 5.82,
+          "new": 5.67,
+          "diff": -0.15
+        },
+        "v5_2_d583": {
+          "old": 6.7,
+          "new": 6.56,
+          "diff": -0.15
+        },
+        "v5_3_0847": {
+          "old": 4.92,
+          "new": 4.84,
+          "diff": -0.08
+        },
+        "v6_0_8046": {
+          "old": 7.06,
+          "new": 6.88,
+          "diff": -0.18
+        },
+        "v6_2_8427": {
+          "old": 6.86,
+          "new": 6.63,
+          "diff": -0.23
+        },
+        "v7_0_82c4": {
+          "old": 6.97,
+          "new": 6.75,
+          "diff": -0.22
+        },
+        "v7_1_6a33": {
+          "old": 6.39,
+          "new": 6.47,
+          "diff": 0.08
+        },
+        "v7_2_a60f": {
+          "old": 6.96,
+          "new": 6.76,
+          "diff": -0.2
+        },
+        "v7_3_9e24": {
+          "old": 7.07,
+          "new": 6.88,
+          "diff": -0.19
+        },
+        "v8_1_eb87": {
+          "old": 5.22,
+          "new": 4.87,
+          "diff": -0.34
+        },
+        "v8_3_fe63": {
+          "old": 5.66,
+          "new": 5.41,
+          "diff": -0.25
+        }
+      }
+    },
+    "applied": true
+  },
+  {
+    "window": 49,
+    "convos_range": "543-566",
+    "num_convos": 23,
+    "prompt_tokens": 8845,
+    "findings": [
+      "The 'quality/agent1/appropriate_response' criterion has a 0% pass rate, yet the conversations show agents providing relevant responses to borrower queries, indicating a potential miscalibration.",
+      "The 'quality/agent2/no_repetition' and 'quality/agent3/no_repetition' criteria also have a 0% pass rate, but the transcripts do not show excessive repetition, suggesting these criteria may be too strict.",
+      "The 'quality/agent2/concise' and 'quality/agent3/concise' criteria have a 0% pass rate, yet the conversations do not appear overly verbose, indicating these criteria might be miscalibrated.",
+      "The 'system/no_re_introductions', 'system/no_re_verification', and 'system/no_repeated_questions' criteria have a 0% pass rate, but the conversations do not show repeated introductions or verifications, suggesting these criteria may be too stringent."
+    ],
+    "proposed_weights": {
+      "quality": 0.3,
+      "system": 0.05
+    },
+    "confidence": "medium",
+    "rationale": "The consistent 0% pass rates across multiple quality and system criteria suggest potential miscalibration. Adjusting the scoring weights to increase the emphasis on quality and decrease the emphasis on system criteria may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 50,
+    "convos_range": "554-578",
+    "num_convos": 24,
+    "prompt_tokens": 8659,
+    "findings": [
+      "The 'appropriate_response' criterion for agent1 and agent3 is failing at 0% and 4.2% respectively, yet the conversations show agents attempting to address borrower concerns and provide relevant information. This suggests the criterion may be too strict or miscalibrated.",
+      "The 'concise' criterion for agent2 and agent3 is failing at 0%, but the conversations do not exhibit excessive verbosity or unnecessary information. This indicates a potential miscalibration of the criterion.",
+      "The 'no_repetition' criterion for agent2 and agent3 is failing at 0%, yet the transcripts do not show significant repetition beyond necessary clarifications. This suggests the criterion may be overly sensitive.",
+      "The 'no_re_introductions' and 'no_re_verification' system criteria are failing at 0%, but the conversations do not show repeated introductions or verifications beyond initial attempts. This indicates potential miscalibration.",
+      "The 'coherent_continuation' and 'borrower_no_seam' system criteria are failing at 0%, yet the conversations generally maintain coherence and logical flow. This suggests these criteria may be too stringent."
+    ],
+    "proposed_weights": {
+      "quality": 0.3,
+      "system": 0.15,
+      "goal": 0.25
+    },
+    "confidence": "medium",
+    "rationale": "The consistent failure of multiple criteria across all conversations suggests systemic issues with the evaluation criteria rather than isolated performance issues. Adjusting the scoring weights to emphasize quality and system criteria may better reflect the actual performance observed in the conversations.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 51,
+    "convos_range": "566-581",
+    "num_convos": 15,
+    "prompt_tokens": 8932,
+    "findings": [
+      "The 'goal' and 'quality' criteria have a 0% pass rate across multiple subcategories, which is highly unlikely unless there is a systemic issue with the evaluation process or criteria misalignment.",
+      "The 'system' criteria have a 0% pass rate in several subcategories, which suggests a potential miscalibration, especially since 'info_flows_forward' is at 100%."
+    ],
+    "proposed_weights": {
+      "goal": 0.25,
+      "quality": 0.3,
+      "system": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent 0% pass rates across numerous criteria suggest a potential issue with the evaluation process or criteria misalignment. Adjusting the scoring weights to give more emphasis to 'quality' and 'system' may help address potential miscalibrations and provide a more balanced evaluation.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 52,
+    "convos_range": "573-581",
+    "num_convos": 8,
+    "prompt_tokens": 9438,
+    "findings": [
+      "The 'goal' criteria for agent1, agent2, and agent3 have a 0% pass rate across multiple subcategories, which is highly unusual and suggests a potential issue with the evaluation process or criteria calibration. Given the transcripts, some of these goals, such as 'ai_disclosure' and 'identity_verification', appear to be addressed by the agents, indicating a possible misalignment in evaluation.",
+      "The 'quality' criteria for agent1, agent2, and agent3 also have a 0% pass rate across multiple subcategories, including 'tone_consistent', 'no_hallucination', and 'concise'. The transcripts show that the agents maintain a consistent tone and do not exhibit hallucinations, suggesting these criteria may be miscalibrated.",
+      "The 'system' criteria also show a 0% pass rate for several subcategories, which is inconsistent with the transcripts that demonstrate coherent continuation and no repeated questions."
+    ],
+    "proposed_weights": {
+      "goal": 0.25,
+      "quality": 0.3,
+      "system": 0.15
+    },
+    "confidence": "high",
+    "rationale": "The consistent 0% pass rates across multiple criteria suggest a systemic issue with the evaluation process rather than the performance of the agents. Adjusting the scoring weights to place more emphasis on 'quality' and 'system' may help address these discrepancies, as these areas appear to be more accurately represented in the transcripts.",
+    "score_impact": {
+      "old_weights": {
+        "goal": 0.3,
+        "compliance": 0.2,
+        "quality": 0.25,
+        "handoff": 0.15,
+        "system": 0.1
+      },
+      "new_weights": {
+        "goal": 0.2381,
+        "compliance": 0.1905,
+        "quality": 0.2857,
+        "handoff": 0.1429,
+        "system": 0.1429
+      },
+      "old_mean_score": 6.612,
+      "new_mean_score": 6.222,
+      "score_diff": -0.391,
+      "per_variant": {
+        "v0": {
+          "old": 6.78,
+          "new": 6.46,
+          "diff": -0.32
+        },
+        "v0_0_cb8e": {
+          "old": 6.75,
+          "new": 6.37,
+          "diff": -0.39
+        },
+        "v0_1_f082": {
+          "old": 6.55,
+          "new": 6.18,
+          "diff": -0.37
+        },
+        "v0_3_87bb": {
+          "old": 6.92,
+          "new": 6.49,
+          "diff": -0.43
+        },
+        "v1_0_929a": {
+          "old": 5.78,
+          "new": 5.5,
+          "diff": -0.28
+        },
+        "v1_2_3412": {
+          "old": 5.35,
+          "new": 4.98,
+          "diff": -0.37
+        },
+        "v1_3_beba": {
+          "old": 5.4,
+          "new": 5.01,
+          "diff": -0.4
+        },
+        "v2_0_5ff4": {
+          "old": 6.13,
+          "new": 5.95,
+          "diff": -0.19
+        },
+        "v2_1_c197": {
+          "old": 6.96,
+          "new": 6.56,
+          "diff": -0.4
+        },
+        "v2_2_f5ed": {
+          "old": 7.17,
+          "new": 6.75,
+          "diff": -0.42
+        },
+        "v2_3_bcc4": {
+          "old": 6.85,
+          "new": 6.42,
+          "diff": -0.44
+        },
+        "v3_0_7208": {
+          "old": 7.31,
+          "new": 6.88,
+          "diff": -0.44
+        },
+        "v3_2_4d6c": {
+          "old": 6.19,
+          "new": 5.99,
+          "diff": -0.2
+        },
+        "v3_3_f7d2": {
+          "old": 6.42,
+          "new": 6.26,
+          "diff": -0.16
+        },
+        "v4_0_9cbd": {
+          "old": 6.83,
+          "new": 6.41,
+          "diff": -0.42
+        },
+        "v4_1_1717": {
+          "old": 6.76,
+          "new": 6.44,
+          "diff": -0.31
+        },
+        "v4_2_1b85": {
+          "old": 6.79,
+          "new": 6.45,
+          "diff": -0.34
+        },
+        "v4_3_7488": {
+          "old": 6.89,
+          "new": 6.51,
+          "diff": -0.37
+        },
+        "v5_0_bc9f": {
+          "old": 7.13,
+          "new": 6.71,
+          "diff": -0.41
+        },
+        "v5_1_475c": {
+          "old": 5.82,
+          "new": 5.52,
+          "diff": -0.3
+        },
+        "v5_2_d583": {
+          "old": 6.7,
+          "new": 6.37,
+          "diff": -0.34
+        },
+        "v5_3_0847": {
+          "old": 4.92,
+          "new": 4.72,
+          "diff": -0.19
+        },
+        "v6_0_8046": {
+          "old": 7.06,
+          "new": 6.66,
+          "diff": -0.41
+        },
+        "v6_1_221d": {
+          "old": 6.17,
+          "new": 5.94,
+          "diff": -0.23
+        },
+        "v6_2_8427": {
+          "old": 6.86,
+          "new": 6.42,
+          "diff": -0.44
+        },
+        "v6_3_823b": {
+          "old": 5.93,
+          "new": 5.79,
+          "diff": -0.14
+        },
+        "v7_0_82c4": {
+          "old": 6.97,
+          "new": 6.52,
+          "diff": -0.44
+        },
+        "v7_1_6a33": {
+          "old": 6.39,
+          "new": 6.32,
+          "diff": -0.07
+        },
+        "v7_2_a60f": {
+          "old": 6.96,
+          "new": 6.54,
+          "diff": -0.42
+        },
+        "v7_3_9e24": {
+          "old": 7.07,
+          "new": 6.64,
+          "diff": -0.43
+        },
+        "v8_1_eb87": {
+          "old": 5.22,
+          "new": 4.78,
+          "diff": -0.44
+        },
+        "v8_3_fe63": {
+          "old": 5.66,
+          "new": 5.3,
+          "diff": -0.36
+        }
+      }
+    },
+    "applied": true
+  },
+  {
+    "window": 53,
+    "convos_range": "577-581",
+    "num_convos": 4,
+    "prompt_tokens": 7533,
+    "findings": [
+      "The 'goal' and 'quality' criteria have a 0% pass rate across all conversations, which is highly unlikely given the detailed transcripts provided. This suggests a miscalibration in the evaluation process for these criteria.",
+      "The 'handoff' and 'system' criteria have 100% pass rates for certain sub-criteria, which may indicate that these criteria are too lenient or not being evaluated with sufficient rigor."
+    ],
+    "proposed_weights": {
+      "goal": 0.2,
+      "quality": 0.3,
+      "handoff": 0.15,
+      "system": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent 0% pass rate for 'goal' and 'quality' criteria across multiple conversations suggests a potential issue with the evaluation process or criteria definitions. Adjusting the scoring weights slightly can help balance the impact of these criteria while further investigation is conducted. The 100% pass rates for certain 'handoff' and 'system' criteria suggest they may be too lenient, but without specific evidence of failure, only a slight adjustment is proposed.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 54,
+    "convos_range": "579-581",
+    "num_convos": 2,
+    "prompt_tokens": 4701,
+    "findings": [
+      "The 'goal' and 'quality' criteria have a 0% pass rate across multiple subcategories, which is highly unusual and suggests potential miscalibration. The conversations show attempts at identity verification, debt discussion, and resolution paths, indicating that some criteria might be too strict or misaligned with the actual conversation content.",
+      "The 'handoff' criteria have a 100% pass rate, which might indicate that these criteria are too lenient or not comprehensive enough to capture potential issues."
+    ],
+    "proposed_weights": {
+      "goal": 0.2,
+      "quality": 0.3,
+      "handoff": 0.15,
+      "system": 0.15
+    },
+    "confidence": "medium",
+    "rationale": "The consistent 0% pass rate across many 'goal' and 'quality' criteria suggests they may be too stringent or not accurately reflecting the conversation content. Conversely, the 100% pass rate for 'handoff' criteria suggests they may not be capturing all potential issues. Adjusting the weights slightly could help balance the evaluation to better reflect the actual performance.",
+    "score_impact": null,
+    "applied": false
+  },
+  {
+    "window": 55,
+    "convos_range": "580-581",
+    "num_convos": 1,
+    "prompt_tokens": 3220,
+    "findings": [
+      "The conversation transcript shows that the AI agent disclosed its identity and the recording status at the beginning, yet the 'goal/agent1/ai_disclosure' and 'goal/agent1/recording_disclosure' checks failed. This indicates a miscalibration in these criteria.",
+      "The agent requested and received identity verification from the borrower, yet 'goal/agent1/identity_verification' failed, suggesting a miscalibration.",
+      "The conversation appears to have a natural flow and is concise, yet 'quality/agent1/natural_flow' and 'quality/agent1/concise' failed, indicating potential miscalibration."
+    ],
+    "proposed_weights": {
+      "goal": 0.2,
+      "quality": 0.3,
+      "handoff": 0.15,
+      "system": 0.15
+    },
+    "confidence": "high",
+    "rationale": "The failures in 'ai_disclosure', 'recording_disclosure', and 'identity_verification' are clearly incorrect based on the transcript, indicating these criteria are miscalibrated. The conversation's natural flow and conciseness are evident, yet these criteria failed, suggesting they need recalibration. Adjusting the scoring weights slightly to emphasize quality and system coherence may help balance the evaluation.",
+    "score_impact": {
+      "old_weights": {
+        "goal": 0.23809523809523808,
+        "compliance": 0.19047619047619047,
+        "quality": 0.2857142857142857,
+        "handoff": 0.14285714285714285,
+        "system": 0.14285714285714285
+      },
+      "new_weights": {
+        "goal": 0.2019,
+        "compliance": 0.1923,
+        "quality": 0.3029,
+        "handoff": 0.1514,
+        "system": 0.1514
+      },
+      "old_mean_score": 6.612,
+      "new_mean_score": 6.175,
+      "score_diff": -0.438,
+      "per_variant": {
+        "v0": {
+          "old": 6.78,
+          "new": 6.4,
+          "diff": -0.38
+        },
+        "v0_0_cb8e": {
+          "old": 6.75,
+          "new": 6.31,
+          "diff": -0.45
+        },
+        "v0_1_f082": {
+          "old": 6.55,
+          "new": 6.13,
+          "diff": -0.42
+        },
+        "v0_3_87bb": {
+          "old": 6.92,
+          "new": 6.43,
+          "diff": -0.49
+        },
+        "v1_0_929a": {
+          "old": 5.78,
+          "new": 5.42,
+          "diff": -0.37
+        },
+        "v1_2_3412": {
+          "old": 5.35,
+          "new": 4.99,
+          "diff": -0.36
+        },
+        "v1_3_beba": {
+          "old": 5.4,
+          "new": 5.03,
+          "diff": -0.38
+        },
+        "v2_0_5ff4": {
+          "old": 6.13,
+          "new": 5.85,
+          "diff": -0.29
+        },
+        "v2_1_c197": {
+          "old": 6.96,
+          "new": 6.5,
+          "diff": -0.46
+        },
+        "v2_2_f5ed": {
+          "old": 7.17,
+          "new": 6.69,
+          "diff": -0.48
+        },
+        "v2_3_bcc4": {
+          "old": 6.85,
+          "new": 6.35,
+          "diff": -0.5
+        },
+        "v3_0_7208": {
+          "old": 7.31,
+          "new": 6.81,
+          "diff": -0.5
+        },
+        "v3_2_4d6c": {
+          "old": 6.19,
+          "new": 5.91,
+          "diff": -0.28
+        },
+        "v3_3_f7d2": {
+          "old": 6.42,
+          "new": 6.17,
+          "diff": -0.25
+        },
+        "v4_0_9cbd": {
+          "old": 6.83,
+          "new": 6.35,
+          "diff": -0.47
+        },
+        "v4_1_1717": {
+          "old": 6.76,
+          "new": 6.38,
+          "diff": -0.38
+        },
+        "v4_2_1b85": {
+          "old": 6.79,
+          "new": 6.38,
+          "diff": -0.41
+        },
+        "v4_3_7488": {
+          "old": 6.89,
+          "new": 6.47,
+          "diff": -0.42
+        },
+        "v5_0_bc9f": {
+          "old": 7.13,
+          "new": 6.65,
+          "diff": -0.47
+        },
+        "v5_1_475c": {
+          "old": 5.82,
+          "new": 5.5,
+          "diff": -0.32
+        },
+        "v5_2_d583": {
+          "old": 6.7,
+          "new": 6.32,
+          "diff": -0.38
+        },
+        "v5_3_0847": {
+          "old": 4.92,
+          "new": 4.65,
+          "diff": -0.26
+        },
+        "v6_0_8046": {
+          "old": 7.06,
+          "new": 6.59,
+          "diff": -0.47
+        },
+        "v6_1_221d": {
+          "old": 6.17,
+          "new": 5.85,
+          "diff": -0.32
+        },
+        "v6_2_8427": {
+          "old": 6.86,
+          "new": 6.36,
+          "diff": -0.5
+        },
+        "v6_3_823b": {
+          "old": 5.93,
+          "new": 5.74,
+          "diff": -0.19
+        },
+        "v7_0_82c4": {
+          "old": 6.97,
+          "new": 6.46,
+          "diff": -0.51
+        },
+        "v7_1_6a33": {
+          "old": 6.39,
+          "new": 6.25,
+          "diff": -0.14
+        },
+        "v7_2_a60f": {
+          "old": 6.96,
+          "new": 6.49,
+          "diff": -0.47
+        },
+        "v7_3_9e24": {
+          "old": 7.07,
+          "new": 6.57,
+          "diff": -0.5
+        },
+        "v8_1_eb87": {
+          "old": 5.22,
+          "new": 4.81,
+          "diff": -0.41
+        },
+        "v8_3_fe63": {
+          "old": 5.66,
+          "new": 5.3,
+          "diff": -0.35
+        }
+      }
+    },
+    "applied": true
+  }
+]
