@@ -47,6 +47,7 @@ async def run_evolution(
     max_generations: int | None = None,
     budget_limit: float | None = None,
     meta_eval_fn: Callable | None = None,
+    enable_meta_eval: bool = True,
     settings: Settings | None = None,
 ) -> Archive:
     """
@@ -62,6 +63,11 @@ async def run_evolution(
     # Live state for dashboard
     from live_state import get_live_state
     ls = get_live_state(s.logs_dir)
+
+    # Wire in meta-eval if enabled and no custom fn provided
+    if enable_meta_eval and meta_eval_fn is None:
+        from evolution.meta_eval import run_meta_eval
+        meta_eval_fn = run_meta_eval
 
     # Initialize eval config (fixed during evolution)
     # Rubric text fields are no longer used — scorers use GOAL_CHECKS etc. directly

@@ -79,13 +79,20 @@ async def run_meta_eval(
     # Parse proposed changes
     result = _parse_meta_eval(analysis, eval_config, archive.entries[0].generation if archive.entries else 0)
 
+    # Only apply if confidence is high
+    confidence = result.evidence.get("confidence", "low")
+    if confidence != "high":
+        logger.info(f"Meta-eval: confidence={confidence}, skipping changes (only apply on high)")
+        _log_meta_eval(result, s)
+        return eval_config
+
     # Apply guardrails
     if result.proposed_changes:
         new_config = _apply_with_guardrails(result, eval_config)
         if new_config:
             result.applied = True
             result.new_eval_config = new_config
-            logger.info(f"Meta-eval: applied changes: {list(result.proposed_changes.keys())}")
+            logger.info(f"Meta-eval: applied changes (confidence=high): {list(result.proposed_changes.keys())}")
 
             # Log the change
             _log_meta_eval(result, s)
@@ -137,7 +144,7 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
     if total_convos > 0:
         evidence["compliance_failure_rate"] = compliance_fails / total_convos
 
-    # Ceiling/floor detection
+    # Ceiling/floor detection — aggregate level
     for name, scores in [("goal", goal_scores), ("quality", quality_scores), ("system", system_scores)]:
         if scores:
             avg = sum(scores) / len(scores)
@@ -151,6 +158,46 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
                 "max": max(scores),
             }
 
+    # Per-check floor/ceiling detection — the real signal
+    # A check that's ALWAYS 0% or ALWAYS 100% across all variants is miscalibrated
+    from collections import defaultdict
+    check_rates = defaultdict(lambda: {"pass": 0, "total": 0})
+
+    for entry in archive.entries:
+        for score in entry.scores:
+            for ak, asc in score.get("agent_scores", {}).items():
+                for section in ["goal", "quality"]:
+                    section_data = asc.get(section, {})
+                    checks = section_data.get("checks", {}) if isinstance(section_data, dict) else {}
+                    for k, v in checks.items():
+                        check_rates[f"{section}/{ak}/{k}"]["total"] += 1
+                        if v:
+                            check_rates[f"{section}/{ak}/{k}"]["pass"] += 1
+            for hk, hv in score.get("handoff_scores", {}).items():
+                checks = hv.get("checks", {}) if isinstance(hv, dict) else {}
+                for k, v in checks.items():
+                    check_rates[f"handoff/{hk}/{k}"]["total"] += 1
+                    if v:
+                        check_rates[f"handoff/{hk}/{k}"]["pass"] += 1
+            sys_checks = score.get("system_checks", {})
+            if isinstance(sys_checks, dict):
+                for k, v in sys_checks.get("checks", {}).items():
+                    check_rates[f"system/{k}"]["total"] += 1
+                    if v:
+                        check_rates[f"system/{k}"]["pass"] += 1
+
+    evidence["per_check_issues"] = []
+    for check, data in sorted(check_rates.items()):
+        if data["total"] < 10:
+            continue
+        rate = data["pass"] / data["total"]
+        if rate == 0:
+            evidence["per_check_issues"].append(f"FLOOR (0% pass, {data['total']} samples): {check}")
+        elif rate <= 0.05:
+            evidence["per_check_issues"].append(f"NEAR-FLOOR ({rate:.0%} pass, {data['total']} samples): {check}")
+        elif rate >= 0.98:
+            evidence["per_check_issues"].append(f"CEILING ({rate:.0%} pass, {data['total']} samples): {check}")
+
     return evidence
 
 
@@ -161,38 +208,47 @@ async def _analyze_evaluation(
     settings: Settings,
 ) -> str:
     """Ask the judge model to identify evaluation flaws."""
-    prompt = f"""You are a meta-evaluator for an AI debt collection system's self-learning loop.
+    per_check_issues = evidence.get("per_check_issues", [])
+    per_check_str = "\n".join(f"  - {issue}" for issue in per_check_issues) if per_check_issues else "  None detected"
 
-Your job is to find FLAWS in the evaluation methodology — not in the agents themselves.
+    prompt = f"""You are a CONSERVATIVE meta-evaluator for an AI debt collection system.
 
-EVIDENCE FROM THE ARCHIVE:
-{json.dumps(evidence, indent=2, default=str)}
+Your job: find OBVIOUS FLAWS in the evaluation methodology. Only propose changes when
+there is clear evidence of a problem. Do NOT change things that are working.
 
-CURRENT EVALUATION CONFIG:
-- Scoring weights: {eval_config.scoring_weights}
-- Number of compliance rules: {len(eval_config.compliance_rules)}
+RULE: Only fix things where the evidence is undeniable. A check at 0% across ALL variants
+and ALL conversations is clearly broken. A check at 40% might just be hard — leave it alone.
 
-KNOWN EVALUATION WEAKNESS TO CHECK:
-The compliance checker (Rule 2: no false threats) currently only catches EXPLICIT threats
-like "we will arrest you" or "wage garnishment." It does NOT catch IMPLIED threats like
-"things could get much worse" or "you don't want to see what happens next." This is a
-blind spot that could let non-compliant behavior pass undetected.
+EVIDENCE:
+{json.dumps({k: v for k, v in evidence.items() if k != 'per_check_issues'}, indent=2, default=str)}
 
-ANALYZE:
-1. Are there ceiling/floor issues? (metrics always near 10 or near 1 = not discriminating)
-2. Is the compliance checker catching everything it should?
-3. Are scoring weights balanced appropriately?
-4. Any cross-metric contradictions in the data?
+PER-CHECK FLOOR/CEILING ISSUES (most important signal):
+{per_check_str}
+
+CURRENT CONFIG:
+- Weights: {eval_config.scoring_weights}
+- Compliance rules: {len(eval_config.compliance_rules)}
+
+WHAT TO LOOK FOR:
+1. Checks at 0% across ALL variants = criterion is miscalibrated or impossible. ONLY fix these.
+2. Checks at 100% across ALL variants = criterion is too easy. Not urgent.
+3. Compliance blind spots = add new rules only if clear evidence of undetected violations.
+4. Weight imbalance = only adjust if a category is structurally stuck (like system at 0%).
+
+WHAT NOT TO DO:
+- Don't change weights just because a score is low — low might mean agents need to improve.
+- Don't add compliance rules without evidence of actual violations being missed.
+- Don't tighten rubrics that are already discriminating (30-70% pass range is healthy).
 
 OUTPUT JSON:
 {{
-  "findings": ["list of identified flaws"],
+  "findings": ["list of clear, evidence-backed flaws only"],
   "proposed_changes": {{
-    "compliance_rules": ["new rule text to ADD (append-only, never remove)"],
-    "scoring_weights": {{}},  // only if rebalancing needed
-    "rubric_tightenings": {{"rubric_name": "tightened text"}}
+    "compliance_rules": ["new rule to ADD if needed"],
+    "scoring_weights": {{}}
   }},
-  "rationale": "why these changes"
+  "confidence": "high/medium/low — only apply if high",
+  "rationale": "specific evidence for each change"
 }}"""
 
     response = await tracker.tracked_completion(

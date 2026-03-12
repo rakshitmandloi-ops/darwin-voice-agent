@@ -71,7 +71,7 @@ class EvolutionConfig(BaseModel, frozen=True):
 
 
 class MetaEvalConfig(BaseModel, frozen=True):
-    frequency: int = 3                  # Every N generations
+    frequency: int = 4                  # Every N generations
     scorer_consistency_runs: int = 3
     scorer_variance_threshold: float = 1.5
 
