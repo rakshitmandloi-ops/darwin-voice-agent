@@ -83,7 +83,7 @@ async def run_meta_eval(
     confidence = result.evidence.get("confidence", "low")
     if confidence != "high":
         logger.info(f"Meta-eval: confidence={confidence}, skipping changes (only apply on high)")
-        _log_meta_eval(result, s)
+        _log_meta_eval(result, eval_config, None, s)
         return eval_config
 
     # Apply guardrails
@@ -93,14 +93,11 @@ async def run_meta_eval(
             result.applied = True
             result.new_eval_config = new_config
             logger.info(f"Meta-eval: applied changes (confidence=high): {list(result.proposed_changes.keys())}")
-
-            # Log the change
-            _log_meta_eval(result, s)
-
+            _log_meta_eval(result, eval_config, new_config, s)
             return new_config
 
     logger.info("Meta-eval: no changes applied")
-    _log_meta_eval(result, s)
+    _log_meta_eval(result, eval_config, None, s)
     return eval_config
 
 
@@ -367,12 +364,36 @@ def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalC
         return None
 
 
-def _log_meta_eval(result: MetaEvalResult, settings: Settings) -> None:
-    """Log meta-eval results for audit trail."""
+def _log_meta_eval(
+    result: MetaEvalResult,
+    old_config: EvalConfig,
+    new_config: EvalConfig | None,
+    settings: Settings,
+) -> None:
+    """Log meta-eval results with exact before/after diff."""
     log_dir = settings.eval_versions_dir
     log_dir.mkdir(parents=True, exist_ok=True)
 
     log_file = log_dir / "meta_eval_log.json"
+
+    # Build before/after diff
+    changes_applied = {}
+    if new_config and result.applied:
+        # Weight changes
+        old_w = old_config.scoring_weights
+        new_w = new_config.scoring_weights
+        weight_diff = {}
+        for k in set(list(old_w.keys()) + list(new_w.keys())):
+            old_v = old_w.get(k, 0)
+            new_v = new_w.get(k, 0)
+            if abs(old_v - new_v) > 0.001:
+                weight_diff[k] = {"before": round(old_v, 4), "after": round(new_v, 4), "diff": round(new_v - old_v, 4)}
+        if weight_diff:
+            changes_applied["scoring_weights"] = weight_diff
+
+        # Version change
+        if old_config.version_id != new_config.version_id:
+            changes_applied["version"] = {"before": old_config.version_id, "after": new_config.version_id}
 
     entry = {
         "generation": result.generation,
@@ -380,9 +401,11 @@ def _log_meta_eval(result: MetaEvalResult, settings: Settings) -> None:
         "findings": result.findings,
         "proposed_changes": result.proposed_changes,
         "applied": result.applied,
+        "confidence": result.evidence.get("confidence", "unknown"),
+        "changes_applied": changes_applied,
+        "per_check_issues": result.evidence.get("per_check_issues", []) if isinstance(result.evidence, dict) else [],
         "evidence": result.evidence,
     }
 
-    # Append to JSONL
     with open(log_file, "a") as f:
         f.write(json.dumps(entry, default=str) + "\n")

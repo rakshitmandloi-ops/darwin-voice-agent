@@ -968,25 +968,41 @@ async function showMetaEval() {
         });
       }
 
-      // Proposed changes
-      const changes = run.proposed_changes || run.evidence?.proposed_changes || {};
-      const hasChanges = Object.keys(changes).length > 0;
-      if (hasChanges) {
-        h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Proposed changes:</div>`;
+      // Per-check issues detected
+      const checkIssues = run.per_check_issues || [];
+      if (checkIssues.length) {
+        h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Per-check issues detected:</div>`;
+        checkIssues.forEach(issue => {
+          const isFloor = issue.includes('FLOOR');
+          const isCeiling = issue.includes('CEILING');
+          const col = isFloor ? '#f85149' : isCeiling ? '#d29922' : '#8b949e';
+          h += `<div style="padding:2px 0;font-size:0.82em;color:${col}">${issue}</div>`;
+        });
+      }
 
-        if (changes.compliance_rules && changes.compliance_rules.length) {
-          changes.compliance_rules.forEach(rule => {
-            h += `<div class="meta-change">+ Compliance rule: ${rule}</div>`;
-          });
-        }
-        if (changes.scoring_weights && Object.keys(changes.scoring_weights).length) {
-          for (const [k, v] of Object.entries(changes.scoring_weights)) {
-            h += `<div class="meta-change">Weight: ${k} → ${v}</div>`;
+      // Exact changes applied (before → after)
+      const changesApplied = run.changes_applied || {};
+      if (Object.keys(changesApplied).length) {
+        h += `<div style="color:#3fb950;font-size:0.8em;margin-top:6px;font-weight:bold">Changes applied:</div>`;
+
+        if (changesApplied.scoring_weights) {
+          h += `<div style="font-size:0.82em;margin-top:4px">Scoring weights:</div>`;
+          for (const [k, v] of Object.entries(changesApplied.scoring_weights)) {
+            const col = v.diff > 0 ? '#3fb950' : '#f85149';
+            h += `<div class="meta-change">${k}: <span style="color:#f85149">${(v.before*100).toFixed(0)}%</span> → <span style="color:#3fb950">${(v.after*100).toFixed(0)}%</span> <span style="color:${col}">(${v.diff>0?'+':''}${(v.diff*100).toFixed(1)}%)</span></div>`;
           }
         }
-        if (changes.rubric_tightenings && Object.keys(changes.rubric_tightenings).length) {
-          for (const [k, v] of Object.entries(changes.rubric_tightenings)) {
-            h += `<div class="meta-change">Rubric: ${k} → ${v}</div>`;
+
+        if (changesApplied.version) {
+          h += `<div class="meta-change">Config version: ${changesApplied.version.before} → ${changesApplied.version.after}</div>`;
+        }
+      } else if (applied) {
+        // Fallback: show proposed changes if no diff recorded
+        const changes = run.proposed_changes || run.evidence?.proposed_changes || {};
+        if (changes.scoring_weights && Object.keys(changes.scoring_weights).length) {
+          h += `<div style="color:#8b949e;font-size:0.8em;margin-top:6px">Proposed weight changes:</div>`;
+          for (const [k, v] of Object.entries(changes.scoring_weights)) {
+            h += `<div class="meta-change">Weight: ${k} → ${v}</div>`;
           }
         }
       }
