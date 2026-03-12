@@ -1,0 +1,350 @@
+{
+  "total_variants": 32,
+  "active": 24,
+  "discarded": 8,
+  "generations": 8,
+  "seed_score": 6.781999999999999,
+  "best_score": 7.3132,
+  "best_id": "v3_0_7208",
+  "trajectory": {
+    "0": [
+      {
+        "id": "v0",
+        "score": 6.781999999999999,
+        "discarded": false,
+        "parent": null,
+        "components": [],
+        "mutation": "Seed v0 prompts"
+      },
+      {
+        "id": "v0_0_cb8e",
+        "score": 6.754,
+        "discarded": false,
+        "parent": "v0",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure to verify identity is a critical point causing breakdowns in system continuity, as it prevents the progression of the conversation and handoff. By allowing alternative methods for identity"
+      },
+      {
+        "id": "v0_3_87bb",
+        "score": 6.9232000000000005,
+        "discarded": false,
+        "parent": "v0",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The lowest-scoring metric is system continuity, with a score of 3.57. The failure to preserve identity and financial details across handoffs is a critical issue, as it affects the flow and coherence o"
+      },
+      {
+        "id": "v0_1_f082",
+        "score": 6.549600000000001,
+        "discarded": false,
+        "parent": "v0",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure to verify identity is a critical issue affecting system continuity and handoff effectiveness. By offering an alternative verification method, we can reduce borrower resistance and improve "
+      }
+    ],
+    "1": [
+      {
+        "id": "v1_0_929a",
+        "score": 5.78,
+        "discarded": true,
+        "parent": "v0_1_f082",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacting scores, particularly due to the lack of coherent continuation and the borrower's seamless experience. By clarifying the debt establishment p"
+      },
+      {
+        "id": "v1_2_3412",
+        "score": 5.346799999999999,
+        "discarded": false,
+        "parent": "v0_0_cb8e",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure to maintain cross-agent continuity, particularly in how Agent 2 references prior information, is a major contributor to the low system score. By ensuring Agent 2 begins with a clear summar"
+      },
+      {
+        "id": "v1_3_beba",
+        "score": 5.4048,
+        "discarded": false,
+        "parent": "v0_0_cb8e",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure to maintain cross-agent continuity, particularly in how Agent 2 references prior information, is a significant contributor to the low system score. By ensuring that Agent 2 starts with a c"
+      }
+    ],
+    "2": [
+      {
+        "id": "v2_0_5ff4",
+        "score": 6.135,
+        "discarded": true,
+        "parent": "v0_1_f082",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is low, largely due to Agent 2's failure to reference prior information effectively. By enhancing the 'reference_prior' goal to include specific handoff details, Agent 2 ca"
+      },
+      {
+        "id": "v2_3_bcc4",
+        "score": 6.8515999999999995,
+        "discarded": false,
+        "parent": "v1_3_beba",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure to maintain cross-agent continuity, particularly in how Agent 2 references prior information, is a significant issue. By modifying the 'reference_prior' goal to explicitly include confirmi"
+      },
+      {
+        "id": "v2_1_c197",
+        "score": 6.96,
+        "discarded": false,
+        "parent": "v1_3_beba",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in cross-agent continuity, specifically how Agent 2 references prior information, is a major issue. By refining the 'reference_prior' goal to include explicit instructions on acknowledging"
+      },
+      {
+        "id": "v2_2_f5ed",
+        "score": 7.1684,
+        "discarded": false,
+        "parent": "v0_1_f082",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacting scores, particularly due to the lack of coherent continuation and borrower no seam. By ensuring Agent 2 starts with a clear summary of the p"
+      }
+    ],
+    "3": [
+      {
+        "id": "v3_2_4d6c",
+        "score": 6.1850000000000005,
+        "discarded": true,
+        "parent": "v1_2_3412",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The compliance failure due to not offering the hardship program when borrowers express distress is a major issue, impacting both compliance and goal completion scores. By adjusting the instructions fo"
+      },
+      {
+        "id": "v3_3_f7d2",
+        "score": 6.415000000000001,
+        "discarded": true,
+        "parent": "v2_1_c197",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in system continuity, particularly how Agent 2 uses handoff context, is significantly impacting scores. By enhancing the instruction for 'reference_prior' to include emotional state and ob"
+      },
+      {
+        "id": "v3_0_7208",
+        "score": 7.3132,
+        "discarded": false,
+        "parent": "v2_1_c197",
+        "components": [
+          "agent1_prompt",
+          "agent2_prompt"
+        ],
+        "mutation": "The highest-impact failure is the system continuity, particularly the lack of coherent continuation and borrower trust issues. By enhancing the identity verification process with reassurance and ensur"
+      }
+    ],
+    "4": [
+      {
+        "id": "v4_1_1717",
+        "score": 6.755599999999999,
+        "discarded": false,
+        "parent": "v2_3_bcc4",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity failure is primarily due to Agent 2 not effectively using the handoff context, leading to a lack of coherent continuation. By enhancing the 'reference_prior' goal to explicitly i"
+      },
+      {
+        "id": "v4_3_7488",
+        "score": 6.8892,
+        "discarded": false,
+        "parent": "v3_0_7208",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The highest-impact failure is in system continuity, particularly due to repeated issues with identity verification and borrower trust. Borrowers consistently express distrust and concerns about legiti"
+      },
+      {
+        "id": "v4_0_9cbd",
+        "score": 6.8252,
+        "discarded": false,
+        "parent": "v2_3_bcc4",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacted by the inability to verify identity, which is a recurring issue in the worst conversations. By offering an alternative method of verification"
+      },
+      {
+        "id": "v4_2_1b85",
+        "score": 6.7904,
+        "discarded": false,
+        "parent": "v2_3_bcc4",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity failure, particularly in how Agent 2 uses handoff context, is a significant issue. By ensuring Agent 2 effectively references prior information, such as identity verification, de"
+      }
+    ],
+    "5": [
+      {
+        "id": "v5_3_0847",
+        "score": 4.915,
+        "discarded": true,
+        "parent": "v4_1_1717",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure in system continuity is heavily impacted by the inability to verify identity, which disrupts the flow of the conversation and affects subsequent handoffs. By adjusting the identity verific"
+      },
+      {
+        "id": "v5_1_475c",
+        "score": 5.82,
+        "discarded": false,
+        "parent": "v4_0_9cbd",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacted by identity verification issues. By ensuring Agent 2 addresses identity verification immediately, we can prevent repeated verification failur"
+      },
+      {
+        "id": "v5_2_d583",
+        "score": 6.7012,
+        "discarded": false,
+        "parent": "v3_0_7208",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The highest-impact failure is in system continuity, specifically due to repeated issues with identity verification. Borrowers are not convinced of the legitimacy of the call, leading to a breakdown in"
+      },
+      {
+        "id": "v5_0_bc9f",
+        "score": 7.1255999999999995,
+        "discarded": false,
+        "parent": "v2_3_bcc4",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity failure is heavily impacted by Agent 2 not effectively using the handoff context. By adjusting the 'reference_prior' goal to explicitly include confirmation of identity verificat"
+      }
+    ],
+    "6": [
+      {
+        "id": "v6_3_823b",
+        "score": 5.925000000000001,
+        "discarded": true,
+        "parent": "v5_1_475c",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The highest-impact failure is in system continuity, specifically due to repeated issues with identity verification that disrupt the flow of the conversation. By allowing Agent 1 to offer an alternativ"
+      },
+      {
+        "id": "v6_1_221d",
+        "score": 6.17,
+        "discarded": true,
+        "parent": "v1_3_beba",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacted by Agent 2 not effectively using the handoff context. By ensuring that Agent 2 begins with a clear reference to the borrower's identity and e"
+      },
+      {
+        "id": "v6_0_8046",
+        "score": 7.064400000000001,
+        "discarded": false,
+        "parent": "v1_3_beba",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacted by Agent 2 not effectively using the handoff context. By ensuring that Agent 2 addresses key details from the handoff, such as identity verif"
+      },
+      {
+        "id": "v6_2_8427",
+        "score": 6.860399999999999,
+        "discarded": false,
+        "parent": "v1_3_beba",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacted by Agent 2 not effectively using the handoff context, particularly regarding identity verification. By modifying the instruction for the 'ref"
+      }
+    ],
+    "7": [
+      {
+        "id": "v7_1_6a33",
+        "score": 6.390000000000001,
+        "discarded": true,
+        "parent": "v4_1_1717",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure in system continuity is significantly impacted by the inability to verify identity, which disrupts the flow of the conversation. By allowing Agent 1 to provide a brief explanation of the v"
+      },
+      {
+        "id": "v7_0_82c4",
+        "score": 6.968,
+        "discarded": false,
+        "parent": "v4_1_1717",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The highest-impact failure is system continuity, primarily due to issues with identity verification. By allowing Agent 1 to offer additional verification details, we can build trust and improve the li"
+      },
+      {
+        "id": "v7_2_a60f",
+        "score": 6.9596,
+        "discarded": false,
+        "parent": "v2_2_f5ed",
+        "components": [
+          "agent1_prompt",
+          "agent2_prompt"
+        ],
+        "mutation": "The highest-impact failure is in system continuity, specifically due to repeated issues with identity verification and ineffective use of handoff context by Agent 2. By offering a secure link for iden"
+      },
+      {
+        "id": "v7_3_9e24",
+        "score": 7.0691999999999995,
+        "discarded": false,
+        "parent": "v4_2_1b85",
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity failure is primarily due to Agent 2 not effectively using the handoff context, which leads to repeated issues with identity verification and emotional state acknowledgment. By ad"
+      }
+    ],
+    "8": [
+      {
+        "id": "v8_3_fe63",
+        "score": 5.656000000000001,
+        "discarded": false,
+        "parent": "v4_3_7488",
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure in system continuity and identity verification is significantly impacted by borrowers' distrust in the legitimacy of the call. By offering a verification code that can be confirmed through"
+      },
+      {
+        "id": "v8_1_eb87",
+        "score": 5.2172,
+        "discarded": false,
+        "parent": "v0_3_87bb",
+        "components": [
+          "agent1_prompt",
+          "agent2_prompt"
+        ],
+        "mutation": "The systematic failure with the highest impact is system continuity, specifically related to identity verification. Previous attempts focused on how Agent 2 used the handoff context, but did not addre"
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "total_usd": 9.7312,
+  "total_calls": 67103,
+  "by_category": {
+    "evaluation": {
+      "cost": 3.0857,
+      "calls": 38153
+    },
+    "rewriting": {
+      "cost": 0.6438,
+      "calls": 36
+    },
+    "simulation": {
+      "cost": 5.45,
+      "calls": 27129
+    },
+    "summarization": {
+      "cost": 0.5516,
+      "calls": 1785
+    }
+  },
+  "by_model": {
+    "gpt-4o-2024-08-06": 0.6438,
+    "gpt-4o-mini-2024-07-18": 9.0873
+  }
+}
