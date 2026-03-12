@@ -48,17 +48,24 @@ async def run_evolution(
     budget_limit: float | None = None,
     meta_eval_fn: Callable | None = None,
     enable_meta_eval: bool = True,
+    resume_batch: str | None = None,
     settings: Settings | None = None,
 ) -> Archive:
     """
     Run the full DGM evolution loop.
 
+    Pass resume_batch="batch_id" to continue a previous run.
     Returns the archive with all variants and their scores.
     """
     s = settings or get_settings()
     max_gen = max_generations or s.evolution.max_generations
     tracker = CostTracker(s)
-    archive = Archive(s)
+
+    if resume_batch:
+        archive = Archive(s, batch_id=resume_batch)
+        logger.info(f"Resuming batch {resume_batch}: {archive.size} variants, best={archive.get_best().mean_score:.2f}")
+    else:
+        archive = Archive(s)
 
     # Live state for dashboard
     from live_state import get_live_state
@@ -84,10 +91,19 @@ async def run_evolution(
         logger.info(f"Seed v0: mean_score={seed_entry.mean_score:.2f}")
 
     recent_mutations: list[str] = []
+    # Collect recent mutations from existing archive for context
+    for entry in sorted(archive.entries, key=lambda e: e.generation):
+        if entry.mutation_description:
+            recent_mutations.append(entry.mutation_description[:100])
+
     best_score = archive.get_best().mean_score
     plateau_count = 0
 
-    for gen in range(max_gen):
+    # Start from the next generation after the highest in archive
+    start_gen = max((e.generation for e in archive.entries), default=-1) + 1
+    logger.info(f"Starting from generation {start_gen} (archive has {archive.size} variants, best={best_score:.2f})")
+
+    for gen in range(start_gen, start_gen + max_gen):
         logger.info(f"=== Generation {gen} ===")
         ls.set_generation(gen)
 

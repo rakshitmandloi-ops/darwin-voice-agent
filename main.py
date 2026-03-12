@@ -38,6 +38,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     archive = asyncio.run(
         run_evolution(
             max_generations=args.max_gen,
+            resume_batch=args.resume,
             settings=s,
         )
     )
@@ -211,6 +212,7 @@ def main() -> None:
     evolve_parser = subparsers.add_parser("evolve", help="Run DGM evolution loop")
     evolve_parser.add_argument("--max-gen", type=int, default=None, help="Max generations")
     evolve_parser.add_argument("--budget", type=float, default=None, help="Budget limit")
+    evolve_parser.add_argument("--resume", type=str, default=None, help="Resume a previous batch by ID (e.g. 20260311_172220)")
 
     # status
     subparsers.add_parser("status", help="Show archive summary")
