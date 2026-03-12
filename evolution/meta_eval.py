@@ -163,28 +163,48 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
     from collections import defaultdict
     check_rates = defaultdict(lambda: {"pass": 0, "total": 0})
 
+    def _get(obj, key, default=None):
+        """Get attribute from Pydantic model or dict."""
+        if isinstance(obj, dict):
+            return obj.get(key, default)
+        return getattr(obj, key, default)
+
+    def _get_checks(obj):
+        """Extract checks dict from ChecklistResult, HandoffChecklist, SystemChecklist, or dict."""
+        if isinstance(obj, dict):
+            return obj.get("checks", obj.get("rule_results", {}))
+        if hasattr(obj, "checks"):
+            return obj.checks
+        if hasattr(obj, "rule_results"):
+            return obj.rule_results
+        return {}
+
     for entry in archive.entries:
         for score in entry.scores:
-            for ak, asc in score.get("agent_scores", {}).items():
+            agent_scores = _get(score, "agent_scores", {})
+            for ak, asc in (agent_scores.items() if isinstance(agent_scores, dict) else {}):
                 for section in ["goal", "quality"]:
-                    section_data = asc.get(section, {})
-                    checks = section_data.get("checks", {}) if isinstance(section_data, dict) else {}
+                    section_data = _get(asc, section, {})
+                    checks = _get_checks(section_data)
                     for k, v in checks.items():
                         check_rates[f"{section}/{ak}/{k}"]["total"] += 1
                         if v:
                             check_rates[f"{section}/{ak}/{k}"]["pass"] += 1
-            for hk, hv in score.get("handoff_scores", {}).items():
-                checks = hv.get("checks", {}) if isinstance(hv, dict) else {}
+
+            handoff_scores = _get(score, "handoff_scores", {})
+            for hk, hv in (handoff_scores.items() if isinstance(handoff_scores, dict) else {}):
+                checks = _get_checks(hv)
                 for k, v in checks.items():
                     check_rates[f"handoff/{hk}/{k}"]["total"] += 1
                     if v:
                         check_rates[f"handoff/{hk}/{k}"]["pass"] += 1
-            sys_checks = score.get("system_checks", {})
-            if isinstance(sys_checks, dict):
-                for k, v in sys_checks.get("checks", {}).items():
-                    check_rates[f"system/{k}"]["total"] += 1
-                    if v:
-                        check_rates[f"system/{k}"]["pass"] += 1
+
+            sys_data = _get(score, "system_checks", {})
+            sys_checks = _get_checks(sys_data)
+            for k, v in sys_checks.items():
+                check_rates[f"system/{k}"]["total"] += 1
+                if v:
+                    check_rates[f"system/{k}"]["pass"] += 1
 
     evidence["per_check_issues"] = []
     for check, data in sorted(check_rates.items()):
