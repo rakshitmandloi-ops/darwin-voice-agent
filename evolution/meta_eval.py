@@ -86,7 +86,8 @@ async def run_meta_eval(
     analysis = await _analyze_evaluation(evidence, eval_config, tracker, s)
 
     # Parse proposed changes
-    result = _parse_meta_eval(analysis, eval_config, archive.entries[0].generation if archive.entries else 0)
+    current_gen = max((e.generation for e in archive.entries), default=0) if archive.entries else 0
+    result = _parse_meta_eval(analysis, eval_config, current_gen)
 
     # Only apply if confidence is high
     confidence = result.evidence.get("confidence", "low")

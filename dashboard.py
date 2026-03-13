@@ -1145,6 +1145,16 @@ async function showMetaEval() {
             h += `</div>`;
           }
         }
+        if (changesApplied.rubric_overrides) {
+          h += `<div style="color:#8b5cf6;font-size:0.85em;font-weight:bold;margin-top:8px">Rubric Criteria Rewrites:</div>`;
+          for (const [k, v] of Object.entries(changesApplied.rubric_overrides)) {
+            h += `<div style="background:#0d1117;border:1px solid #8b5cf644;border-radius:4px;padding:8px;margin:4px 0">`;
+            h += `<div style="color:#8b5cf6;font-weight:bold;font-size:0.85em">${k}</div>`;
+            h += `<div style="color:#f85149;text-decoration:line-through;font-size:0.82em;margin-top:4px">OLD: ${v.before}</div>`;
+            h += `<div style="color:#3fb950;font-size:0.82em;margin-top:2px">NEW: ${v.after}</div>`;
+            h += `</div>`;
+          }
+        }
         if (changesApplied.version) {
           h += `<div class="meta-change">Config: ${changesApplied.version.before} → ${changesApplied.version.after}</div>`;
         }
