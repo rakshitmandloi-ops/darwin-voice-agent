@@ -271,6 +271,26 @@ def _gather_evidence(archive: Any) -> dict[str, Any]:
     return evidence
 
 
+def _lookup_hardcoded_criterion(check_key: str) -> str:
+    """Look up the hardcoded criterion text from rubrics.py for a check key."""
+    from evaluation.rubrics import GOAL_CHECKS, QUALITY_CHECKS, SYSTEM_CHECKS, HANDOFF_CHECKS
+
+    parts = check_key.split("/")
+    if len(parts) == 3:
+        cat, agent, key = parts
+        if cat == "goal":
+            return GOAL_CHECKS.get(agent, {}).get(key, check_key)
+        elif cat == "quality":
+            return QUALITY_CHECKS.get(key, check_key)
+        elif cat == "handoff":
+            return HANDOFF_CHECKS.get(key, check_key)
+    elif len(parts) == 2:
+        cat, key = parts
+        if cat == "system":
+            return SYSTEM_CHECKS.get(key, check_key)
+    return check_key
+
+
 def _format_sample_transcripts(transcripts: list[dict]) -> str:
     """Format sample transcripts for the meta-eval prompt."""
     if not transcripts:
@@ -485,13 +505,16 @@ def _log_meta_eval(
         if weight_diff:
             changes_applied["scoring_weights"] = weight_diff
 
-        # Rubric overrides
+        # Rubric overrides — look up actual hardcoded text for "before"
         old_overrides = old_config.rubric_overrides if hasattr(old_config, 'rubric_overrides') else {}
         new_overrides = new_config.rubric_overrides if hasattr(new_config, 'rubric_overrides') else {}
         rubric_diff = {}
         for k in set(list(old_overrides.keys()) + list(new_overrides.keys())):
-            old_text = old_overrides.get(k, "(hardcoded default)")
-            new_text = new_overrides.get(k, "(hardcoded default)")
+            old_text = old_overrides.get(k)
+            if old_text is None:
+                # Look up the actual hardcoded criterion text
+                old_text = _lookup_hardcoded_criterion(k)
+            new_text = new_overrides.get(k, old_text)
             if old_text != new_text:
                 rubric_diff[k] = {"before": old_text[:200], "after": new_text[:200]}
         if rubric_diff:
