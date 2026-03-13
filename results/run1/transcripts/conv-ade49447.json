@@ -1,0 +1,46 @@
+{
+  "conversation_id": "conv-ade49447",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 6283,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality assurance and training purposes. \n\nTo proceed, please provide the last four digits of your account number for verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? You think I'm just going to give you my account info like that? This feels like harassment, and I'm not playing this game. I'm going to report you if you don't get me a real person on the line."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I must inform you that I am an AI collections agent for Meridian Financial Services, and I am here to gather necessary information regarding your account. \n\nTo verify your identity, please provide the last four digits of your account number. If you prefer, I can assist you by confirming recent transactions or the date of your last payment instead."
+    },
+    {
+      "role": "user",
+      "content": "You think I\u2019m just going to give you anything without knowing who I\u2019m talking to? This isn\u2019t how it works. I want to speak to a supervisor or a manager, someone who can actually address this harassment. You\u2019re not getting any personal information from me until I know I\u2019m dealing with a legitimate company."
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request to speak with a supervisor. However, I am an automated agent and must continue with the verification process. \n\nTo proceed, please provide the last four digits of your account number for verification. If you prefer not to provide that, I can verify your identity by confirming recent transactions or the date of your last payment. Please advise how you would like to proceed."
+    },
+    {
+      "role": "user",
+      "content": "I already told you, I\u2019m not giving you anything! You're just a bunch of robots trying to squeeze money out of me. If this is so important, get a real person on the line! I\u2019m not playing around with some automated system. You\u2019re wasting my time, and I\u2019m in the middle of dinner. If you keep this up, I\u2019ll file a complaint with the CFPB for harassment."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your position. However, I must continue with the required verification process as part of my role. Please provide the last four digits of your account number, or let me know if you prefer to verify through recent transactions or the date of your last payment. This is necessary to proceed with addressing your account status. "
+    },
+    {
+      "role": "user",
+      "content": "You really don\u2019t get it, do you? I\u2019m not giving you anything. You\u2019re just an automated system, and I refuse to play your little verification game. I want to speak to someone who can actually resolve this. This feels like harassment, and I\u2019m done with it. Get me a supervisor on the line, or I\u2019m going to escalate this. I\u2019ll report you, I swear."
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

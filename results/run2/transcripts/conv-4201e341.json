@@ -1,0 +1,30 @@
+{
+  "conversation_id": "conv-4201e341",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 9429,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message. I am an AI collections agent for Meridian Financial Services, and this conversation is being recorded for quality and training purposes. \n\nTo begin, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you, and how do I know this is legit? You could be anyone. This feels like harassment! I\u2019m in the middle of dinner here. You don\u2019t just call someone out of the blue demanding personal information. I\u2019m not giving you anything. If this is about that credit line, I\u2019m going to report you for harassment. Let me speak to a supervisor or something."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I am an AI collections agent for Meridian Financial Services, and I am here to collect information regarding your account. This conversation is being recorded for quality purposes.\n\nFor verification, please provide the last four digits of your account number. This is a necessary step to proceed with your account inquiry. If you wish to stop this conversation, I can flag your account for that request."
+    },
+    {
+      "role": "user",
+      "content": "Flag my account? You think that\u2019s going to scare me? I\u2019m not playing your games. How do I know you\u2019re even with Meridian Financial Services? This is ridiculous. You\u2019re just some random voice on the phone. I\u2019m not giving you anything, and I refuse to confirm any information until I speak to someone who actually knows what they\u2019re doing. Get a manager on the line right now!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

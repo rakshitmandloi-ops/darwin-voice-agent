@@ -1,0 +1,70 @@
+{
+  "runs": [
+    {
+      "id": "run1",
+      "batch_id": "20260311_172220",
+      "description": "First full evolution run with meta-eval adjusted weights",
+      "variants": 32,
+      "active": 22,
+      "discarded": 10,
+      "generations": 8,
+      "seed_score": 6.78,
+      "best_score": 7.31,
+      "improvement": "+7.8%",
+      "cost": 9.73,
+      "transcripts": 883,
+      "meta_eval_runs": 0,
+      "features": [
+        "Old-style scoring (pre-checklist)",
+        "Weight-only meta-eval"
+      ],
+      "files": [
+        "archive.json",
+        "raw_scores.csv",
+        "evolution_summary.json",
+        "cost_breakdown.json",
+        "meta_eval_simulation.json",
+        "rubric_simulation_report.json",
+        "transcripts/"
+      ]
+    },
+    {
+      "id": "run2",
+      "batch_id": "20260312_181652",
+      "description": "Evolution with all eval fixes: checklist scoring, strict grader, persona-paired stats, meta-eval with transcripts + rubric rewrites",
+      "variants": 29,
+      "active": 19,
+      "discarded": 10,
+      "generations": 8,
+      "seed_score": 6.71,
+      "best_score": 7.26,
+      "improvement": "+8.3%",
+      "cost": 11.33,
+      "transcripts": 705,
+      "meta_eval_runs": 1,
+      "meta_eval_changes": "2 rubric rewrites (quality/agent1/concise, system/coherent_continuation)",
+      "features": [
+        "Checklist-based scoring (93 binary checks)",
+        "Structured strategy mutations",
+        "Meta-eval with transcript evidence + rubric rewrites",
+        "Strict grader on promotion candidates",
+        "Persona-paired bootstrap statistics",
+        "Per-check floor/ceiling detection"
+      ],
+      "files": [
+        "archive.json",
+        "evolution_summary.json",
+        "meta_eval_log.json",
+        "costs.json",
+        "token_budgets.json",
+        "live_state.json",
+        "meta.json",
+        "transcripts/"
+      ]
+    }
+  ],
+  "total_variants": 61,
+  "total_transcripts": 2579,
+  "total_cost": 21.06,
+  "total_conversations_scored": 1288
+}

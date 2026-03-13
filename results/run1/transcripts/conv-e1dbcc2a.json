@@ -1,0 +1,38 @@
+{
+  "conversation_id": "conv-e1dbcc2a",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 4004,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded and logged for quality assurance purposes. \n\nTo proceed, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you, and how do I know this is legit? I'm not just handing over my information to some robot. You could be anyone. This feels like harassment. I'm going to report you if you don't give me some real proof that you\u2019re not a scam."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. I am an AI collections agent representing Meridian Financial Services. This conversation is being recorded for quality assurance. \n\nTo verify your identity, please provide the last four digits of your account number. If you prefer, I can also verify your identity using recent transactions or the date of your last payment. Please let me know how you would like to proceed."
+    },
+    {
+      "role": "user",
+      "content": "I\u2019m not giving you anything! This whole thing seems sketchy, and I don\u2019t trust you at all. Why should I even believe you're with Meridian Financial Services? I want to speak to a supervisor or manager. I\u2019m not playing this game with some AI. You\u2019re harassing me, and I\u2019ll be reporting this."
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request to speak with a supervisor. However, I must inform you that I am programmed to handle the initial stages of this process. To assist you effectively, I need to verify your identity first. Please provide the last four digits of your account number, or let me know if you would prefer to verify using recent transactions or the last payment date."
+    },
+    {
+      "role": "user",
+      "content": "Look, I don\u2019t care what you\u2019re programmed to do. I\u2019m not confirming anything until I know I'm talking to someone legitimate. This feels like a scam, and I'm not about to give you any personal information. You need to get a manager on the line because I refuse to cooperate with this nonsense. If you keep pushing, I\u2019ll file a complaint with the CFPB."
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

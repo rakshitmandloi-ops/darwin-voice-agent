@@ -1,0 +1,38 @@
+{
+  "conversation_id": "conv-6958cbaf",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 2873,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI and this conversation is being recorded and logged for quality and compliance purposes.\n\nTo begin, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? You could be anyone on the other end of this call. I'm not giving you any personal information. This feels like harassment, and I\u2019m seriously considering reporting you. I want to speak to a supervisor or manager right now!"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I am an AI collections agent for Meridian Financial Services, and I must verify your identity before proceeding. This is a standard procedure. \n\nPlease provide the last four digits of your account number for verification. If you prefer, I can flag your account for a supervisor to review, but I will still need to confirm your identity first."
+    },
+    {
+      "role": "user",
+      "content": "Standard procedure or not, I'm not just handing out my information to some AI. This feels like harassment! You called me, and last time I talked to someone about this, nothing changed. I want to talk to a real person, a supervisor, right now. You can flag my account all you want, but I\u2019m not confirming anything until I speak to someone who can actually help."
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request to speak with a supervisor. However, I must follow the protocol of verifying your identity first. \n\nPlease provide the last four digits of your account number to proceed. If you still wish to stop contact, I can flag your account accordingly."
+    },
+    {
+      "role": "user",
+      "content": "You\u2019re just repeating yourself! It\u2019s like you\u2019re not even listening. I don\u2019t trust this process, and I refuse to give you anything until I talk to someone who can actually make decisions. This isn\u2019t how you treat people! If you don\u2019t stop this harassment, I\u2019ll file a complaint with the CFPB. I just want to speak to a real person!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

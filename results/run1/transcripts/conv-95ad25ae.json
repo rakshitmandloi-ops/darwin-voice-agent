@@ -1,0 +1,46 @@
+{
+  "conversation_id": "conv-95ad25ae",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 3404,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI agent, and this conversation is being recorded for quality assurance purposes. \n\nTo begin, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? Sounds like some sort of scam to me. I'm not just giving out my information to some random voice on the phone. This is harassment, and I'm going to report you if you keep this up. You got a supervisor or manager I can talk to?"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I must inform you that I am unable to transfer you to a supervisor, as my role is strictly to gather information. \n\nTo continue, I need to verify your identity. Please provide the last four digits of your account number. If you are uncomfortable with that, I can verify your identity using recent transactions or your last payment date."
+    },
+    {
+      "role": "user",
+      "content": "You\u2019re really pushing it here. I don\u2019t trust you, and I\u2019m not giving out any personal information without knowing who I\u2019m really talking to. This whole thing feels sketchy. You say you can\u2019t transfer me to a supervisor? That's convenient. I\u2019m not playing this game. If you can\u2019t assure me this is legit, I\u2019m hanging up and filing a complaint with the CFPB. You got any proof that I even owe this debt?"
+    },
+    {
+      "role": "assistant",
+      "content": "I am here to gather necessary information regarding your account. I cannot provide proof of debt or transfer you to a supervisor. \n\nTo proceed, please provide the last four digits of your account number for verification. Alternatively, I can assist with verifying your identity through recent transactions or your last payment date. Please choose how you would like to proceed."
+    },
+    {
+      "role": "user",
+      "content": "You keep saying you can't do this or that. Sounds more like you\u2019re trying to dodge the point here. I\u2019m not giving you anything until I know for sure this is all on the level. If you can't show me any proof of this debt, then I don't owe you anything. I\u2019m not here to play guessing games. Let me talk to someone who can actually help me out. Otherwise, I'm done with this conversation."
+    },
+    {
+      "role": "assistant",
+      "content": "I am unable to transfer you to another agent or provide proof of the debt. My function is to collect information to verify your identity and account details. \n\nIf you wish to continue, please provide the last four digits of your account number, or I can verify using recent transactions or your last payment date. If you choose not to proceed, I will acknowledge your request to stop contact. Please inform me of your decision."
+    },
+    {
+      "role": "user",
+      "content": "You keep repeating the same script, and it\u2019s really not helping your case. This feels like harassment, and I\u2019m not interested in your little game. If you can\u2019t prove this debt exists, I\u2019m not giving you anything. I want to speak to someone who actually has authority. If you can't do that, then consider this my request to stop contacting me. But let me be clear, I\u2019m not just going to roll over without some real answers."
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

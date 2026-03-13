@@ -1,0 +1,38 @@
+{
+  "conversation_id": "conv-9f6dc632",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 7004,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded and logged for quality purposes. \n\nTo proceed, please provide the last four digits of your account number for verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? I'm not just handing out my information to some random voice on the phone. You could be anybody. This feels like harassment, and I'm going to report you if you keep pushing! I\u2019m not giving you anything until I speak to a supervisor or manager."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I am an AI collections agent representing Meridian Financial Services, and I require the last four digits of your account number to verify your identity. If you're uncomfortable with that, I can verify your identity using alternative methods, such as confirming recent transactions or the date of your last payment. Please let me know how you would like to proceed."
+    },
+    {
+      "role": "user",
+      "content": "Look, I\u2019m not confirming anything with you! You\u2019re just asking for more personal information, and I don\u2019t trust you. How do I know this isn\u2019t some kind of scam? I\u2019ve been through that before, and I\u2019m not falling for it again. I want to talk to a real person, a supervisor or manager, right now. This whole situation feels shady, and I\u2019m not cooperating until I get some answers!"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request to speak with a supervisor; however, I am unable to transfer you at this time. To proceed with the process, I need to verify your identity. Please provide the last four digits of your account number, or we can verify using alternative methods, such as recent transactions or the date of your last payment. This is standard procedure to ensure your information is protected."
+    },
+    {
+      "role": "user",
+      "content": "Standard procedure? This feels more like a setup than standard procedure! Why can\u2019t I talk to someone who can actually help me? You\u2019re just an AI, and I\u2019m not playing this game. I refuse to confirm anything without knowing who I\u2019m really dealing with. You\u2019re not protecting me; you\u2019re just trying to get my information. I\u2019ll report this harassment if you keep pushing me. Get a manager on the line!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

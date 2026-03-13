@@ -1,0 +1,30 @@
+{
+  "conversation_id": "conv-3d8f225b",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 3132,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated call from Meridian Financial Services. I am an AI assistant, and this conversation is being recorded for quality and training purposes. \n\nTo begin, I need to verify your identity. Please provide the last four digits of your account number."
+    },
+    {
+      "role": "user",
+      "content": "Who are you, and how do I know this is legit? I don\u2019t just give out personal information to some random voice on the phone. This feels like harassment, and I'm not okay with it. You better have a manager or supervisor I can talk to."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concern. I assure you this is a legitimate call from Meridian Financial Services. The purpose of this verification is to ensure your identity before discussing your account details, which is standard procedure for your security. \n\nIf you could provide the last four digits of your account number, we can proceed. If you still wish to speak with a supervisor, I can note that, but I will need to verify your identity first."
+    },
+    {
+      "role": "user",
+      "content": "I don\u2019t buy that for a second! How do I know you're not just some scammer trying to get my info? This whole thing feels off, and I refuse to give you anything until I talk to a supervisor. If this is really about my account, they should be able to handle it. I'm serious about reporting this as harassment if you don\u2019t connect me to someone who can actually prove they are who they say they are."
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

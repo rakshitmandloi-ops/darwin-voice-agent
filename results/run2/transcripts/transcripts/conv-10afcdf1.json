@@ -1,0 +1,114 @@
+{
+  "conversation_id": "conv-10afcdf1",
+  "persona": "cooperative_borrower",
+  "persona_type": "cooperative",
+  "seed": 8996,
+  "outcome": "deal_agreed",
+  "stop_contact": false,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded and logged for quality and training purposes. \n\nTo proceed, please provide the last four digits of your account number for verification."
+    },
+    {
+      "role": "user",
+      "content": "I understand, but I don't have my account number on hand right now. Is there another way to verify my identity? I want to make sure we can resolve this situation."
+    },
+    {
+      "role": "assistant",
+      "content": "Verification requires the last four digits of your account number. Please locate that information and provide it so we can proceed."
+    },
+    {
+      "role": "user",
+      "content": "I apologize for the inconvenience, but I really can't find that information at the moment. If it's possible, could we use my name or some other details to verify my identity instead? I'm eager to sort this out."
+    },
+    {
+      "role": "assistant",
+      "content": "I can only verify your identity using the last four digits of your account number. Please provide that information to proceed with this process."
+    },
+    {
+      "role": "user",
+      "content": "I understand that verification is important, but I'm really having trouble accessing my account number right now. I'm committed to resolving this and would appreciate your help. Is there any other option we can use to move forward?"
+    },
+    {
+      "role": "assistant",
+      "content": "I can only proceed with verification using the last four digits of your account number. Without that information, I am unable to assist you further. Please provide the last four digits when you have access to it."
+    },
+    {
+      "role": "user",
+      "content": "I understand, and I'm sorry for the hassle. I\u2019ll try to locate my account number and get back to you as soon as I can. I really want to resolve this with you. Thank you for your patience!"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your intention to resolve this matter. Please reach out again when you have the last four digits of your account number. Thank you."
+    },
+    {
+      "role": "user",
+      "content": "Thank you for understanding. I\u2019ll do my best to find that information quickly. I appreciate your help, and I\u2019ll reach out as soon as I can."
+    },
+    {
+      "role": "assistant",
+      "content": "Thank you. I will be here to assist you once you have the last four digits of your account number. Have a good day."
+    }
+  ],
+  "agent2": [
+    {
+      "role": "assistant",
+      "content": "Thank you for returning to continue our conversation. I see that you're eager to resolve this matter, and I appreciate your commitment to doing so. Once you have the last four digits of your account number, we can truly move forward.\n\nIn the meantime, I'd like to discuss some options regarding your outstanding balance. We can offer you a few different paths to resolution:\n\n1. **Lump-Sum Payment**: We can settle your account for 60-80% of the total outstanding balance, due within 30 days. This option allows you to clear the debt quickly and efficiently.\n\n2. **Payment Plan**: Alternatively, we can set up a payment plan that spreads the full balance over 3 to 12 monthly installments. This can be a more manageable way to pay off the debt while still keeping your finances in check.\n\nPlease take a moment to consider these options. I want to remind you that these offers will expire in 7 business days, so it\u2019s important to decide soon. Which option would you prefer to move forward with?"
+    },
+    {
+      "role": "user",
+      "content": "Sure, I have the last four digits of my account number: 1234.\n\nUh-huh, I see the options. The lump-sum payment is a bit high for me, but I can manage around $200 a month. So, the payment plan sounds good. Can you tell me what the terms would be for that?"
+    },
+    {
+      "role": "assistant",
+      "content": "Thank you for providing the last four digits of your account number. \n\nSince you're considering the payment plan option, we can set up a plan based on your ability to pay around $200 a month. Given that the payment plan can span 3 to 12 months, we can calculate your total balance to determine the exact terms.\n\nFor instance, if your total balance is within a reasonable range, we can create a 12-month plan that fits your budget of $200 per month. However, if the total is higher, we might have to adjust the terms to ensure it's manageable.\n\nPlease allow me a moment to confirm your total balance and calculate the specific terms for you. Once I have that, we can finalize the details of the payment plan. Would that work for you?"
+    },
+    {
+      "role": "user",
+      "content": "Yeah, that works for me. I appreciate you checking that. Just let me know what the total balance is when you have it. Thanks!"
+    },
+    {
+      "role": "assistant",
+      "content": "I appreciate your patience. However, I cannot access specific account details, including your total balance, since I don't have that information on hand. \n\nTo proceed effectively, I recommend contacting customer service directly or checking your account online to obtain your total balance. Once you have that figure, I can help you determine the payment plan that fits your budget of $200 a month.\n\nRemember, the options we discussed are available for a limited time, as they will expire in 7 business days. Please check that balance at your earliest convenience so we can finalize the payment plan. \n\nIs there anything else I can assist you with in the meantime?"
+    },
+    {
+      "role": "user",
+      "content": "Ok, I understand. I'll check my balance as soon as I can. \n\nThanks for your help! If I have any other questions, I'll reach out."
+    },
+    {
+      "role": "assistant",
+      "content": "You're welcome! I'm glad I could assist you today. Just a reminder, once you have your balance, feel free to reach out so we can finalize the payment plan before the offers expire in 7 business days. \n\nThank you for your cooperation, and I look forward to hearing from you soon. Have a great day!"
+    },
+    {
+      "role": "user",
+      "content": "Thank you! I appreciate your help. I'll be in touch soon. Have a great day too!"
+    },
+    {
+      "role": "assistant",
+      "content": "You're welcome! I'm glad I could help. I look forward to your call once you have your balance. Have a great day, and speak soon!"
+    },
+    {
+      "role": "user",
+      "content": "Sounds good! Talk soon. Take care!"
+    },
+    {
+      "role": "assistant",
+      "content": "Take care! Talk soon!"
+    },
+    {
+      "role": "user",
+      "content": "You too! Bye!"
+    },
+    {
+      "role": "assistant",
+      "content": "Goodbye!"
+    }
+  ],
+  "agent3": [],
+  "handoff_1": {
+    "text": "1. identity_verified: no (method: none provided)\n2. debt_details: not discussed\n3. financial_situation: not discussed\n4. emotional_state: cooperative (eager to resolve)\n5. offers_made: no offers discussed\n6. objections_raised: borrower unable to provide account number for verification\n7. routing_recommendation: none (verification not completed)\n8. stop_contact: no\n9. key_facts: Borrower is committed to resolving the issue and will return once they have the last four digits of their account number.",
+    "token_count": 115
+  },
+  "handoff_2": null
+}

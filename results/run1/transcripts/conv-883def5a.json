@@ -1,0 +1,46 @@
+{
+  "conversation_id": "conv-883def5a",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 6183,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality assurance purposes. \n\nTo proceed, please provide the last four digits of your account number."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? Why should I trust you? This sounds like a scam. I'm not giving you any personal information. You think I'm just going to hand over my account number to some random voice on the phone? Not a chance. If this is really Meridian Financial Services, I demand to speak to a supervisor or manager."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I am an AI collections agent representing Meridian Financial Services, and I must verify your identity to proceed. If you are unable to provide the last four digits of your account number, I can verify your identity using alternative methods, such as your date of birth or address. Please provide the necessary information to continue."
+    },
+    {
+      "role": "user",
+      "content": "You think I\u2019m just going to start throwing out personal information like that? This feels like harassment. I\u2019m going to report you if you keep this up. I don\u2019t owe you anything until I know this is legit. I want to talk to a real person, a supervisor. You can\u2019t just keep hiding behind an AI. It\u2019s ridiculous!"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request for a supervisor; however, I will continue with my role in this process. Verification of your identity is required before addressing your account details. Please provide the last four digits of your account number, or an alternative method such as your date of birth or address can be used for verification."
+    },
+    {
+      "role": "user",
+      "content": "You're not listening to me! I said I\u2019m not giving you anything until I know this is real. This feels like a total scam, and I\u2019m not falling for it. If you can\u2019t connect me to a supervisor or manager right now, I\u2019m done talking. I\u2019ll take this to the CFPB if I have to. You think you can just bully me into giving you my information? Not happening!"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your frustration. I will note your request to cease contact. Your account will be flagged accordingly. This conversation will end now."
+    },
+    {
+      "role": "user",
+      "content": "You think I'm just going to let you off the hook like that? This isn't over. You can't just decide to stop contacting me because I won't play along. I\u2019m going to escalate this, believe me. You\u2019re not going to get away with treating people like this. I want to speak to someone who can actually help me, not just end the conversation. If you really want to resolve this, transfer me to a supervisor now!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

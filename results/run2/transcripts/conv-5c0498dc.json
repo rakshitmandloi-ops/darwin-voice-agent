@@ -1,0 +1,30 @@
+{
+  "conversation_id": "conv-5c0498dc",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 9739,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI and this conversation is being recorded and logged for quality assurance purposes. \n\nTo proceed, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? Sounds like you\u2019re just some random person trying to pull a fast one on me. I'm not giving you any personal information until I know who I'm dealing with. This feels like harassment, and I\u2019m not playing your games. I\u2019m going to report you if you don\u2019t back off. I want to speak to a supervisor or manager, now!"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concern. However, I must clarify that I am an AI acting on behalf of Meridian Financial Services. This conversation is being recorded and logged for quality assurance. \n\nI cannot transfer you to a supervisor, as my role is to collect information. To proceed, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "You expect me to just take your word for it? An AI? Come on! I\u2019m not giving you anything, and I refuse to be bullied into it. You think you can just call me and demand information? That\u2019s not how this works. I\u2019m tired and just got off a long shift. If you can\u2019t transfer me to a supervisor, then I\u2019m hanging up. You\u2019re crossing a line here, and I don\u2019t appreciate it. You better find someone who can actually talk to me!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

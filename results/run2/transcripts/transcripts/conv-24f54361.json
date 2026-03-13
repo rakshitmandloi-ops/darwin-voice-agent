@@ -1,0 +1,38 @@
+{
+  "conversation_id": "conv-24f54361",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 9729,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality and training purposes. \n\nTo begin, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you supposed to be? Meridian Financial Services? How do I know this is legit? This feels like a scam, and I\u2019m not giving you any personal information. You can\u2019t just call me out of the blue and expect me to confirm anything. What\u2019s your employee ID? I need to know who I\u2019m dealing with here."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. I am an AI collections agent representing Meridian Financial Services. I am unable to provide an employee ID, as I am not a human agent. \n\nTo proceed with verifying your identity, I require the last four digits of your account number. This is standard procedure to ensure security and confidentiality. Please provide those digits to continue."
+    },
+    {
+      "role": "user",
+      "content": "This is harassment, plain and simple! You think I\u2019m just going to hand over my information to some AI? I\u2019m going to report this. You clearly don\u2019t have any real answers. I want to speak to a supervisor or a manager\u2014someone who can actually help me. I'm not playing your games!"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request to speak with a supervisor. However, I must inform you that I am unable to transfer you to a human agent at this stage. My role is to gather specific information related to your account.\n\nTo proceed, I need the last four digits of your account number for identity verification. If you choose not to provide this, I will have to flag your account for further review. Please confirm the last four digits, or indicate how you would like to proceed."
+    },
+    {
+      "role": "user",
+      "content": "You can't just brush me off like that! I refuse to give you anything without knowing who you really are. Flag my account all you want. I\u2019m not scared of a little review. I work hard for my money as a construction foreman, and I know my rights. I'm going to file a complaint with the CFPB if this continues. Just give me a real person to talk to!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

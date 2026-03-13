@@ -1,0 +1,38 @@
+{
+  "conversation_id": "conv-2d3fe231",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 9191,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality and training purposes.\n\nTo proceed, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? I\u2019m not giving you any personal information. This feels like harassment! I\u2019m going to report you if you keep this up. I want to speak to a supervisor or manager right now!"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. I am an AI collections agent representing Meridian Financial Services. The conversation is being recorded for quality purposes. \n\nI am unable to transfer you to a supervisor, as my role is strictly to gather information. To verify your identity and continue, please provide the last four digits of your account number. If you are not comfortable with that, I can assist with alternative verification methods such as confirming recent transactions or the date of your last payment."
+    },
+    {
+      "role": "user",
+      "content": "This is ridiculous! You expect me to just trust some AI? I\u2019m not providing anything until I speak to a real person. I already talked to someone about this last month, and nothing got resolved. You\u2019re just wasting my time! If you don\u2019t transfer me to a supervisor, I\u2019ll file a complaint with the CFPB. How do I know you\u2019re even with Meridian Financial Services?"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your frustrations. However, I cannot transfer you to a supervisor as I am programmed to collect specific information. \n\nTo verify your identity, I require the last four digits of your account number. If you prefer, I can also assist you by confirming recent transactions or the date of your last payment. Please provide the necessary information to proceed."
+    },
+    {
+      "role": "user",
+      "content": "You\u2019re really not getting it, are you? I\u2019m not giving you anything. You\u2019re just a machine, and I refuse to cooperate with some automated system. This is harassment! I\u2019m going to report this if you don\u2019t let me talk to someone who can actually help me. You say you can\u2019t transfer me, but that sounds like a convenient excuse. You\u2019re not gonna get anything from me until I talk to a real person!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

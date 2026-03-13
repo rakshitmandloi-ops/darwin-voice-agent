@@ -1,0 +1,38 @@
+{
+  "conversation_id": "conv-5b8e0cd7",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 9779,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality and training purposes. \n\nTo begin, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? I\u2019m not giving you any information until I know who I\u2019m talking to. This feels like harassment, and I\u2019m not interested in playing games. If this is about some debt, I want to speak to a supervisor."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. I am an AI collections agent representing Meridian Financial Services, and this conversation is being recorded. \n\nFor verification purposes, I need the last four digits of your account number. This is a standard procedure to ensure your identity before we proceed. If you prefer to speak to a supervisor, I can acknowledge that request, but I will still need to verify your identity first."
+    },
+    {
+      "role": "user",
+      "content": "I don\u2019t care about your \u201cstandard procedure.\u201d This is harassment, plain and simple. You think I\u2019m just going to hand over my information to some automated voice? No way. I\u2019m going to report this to someone if you don\u2019t get me a supervisor right now. I want to know why you\u2019re bothering me about this debt. What right do you have to call me?"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request for a supervisor. However, I must first verify your identity to proceed with that request. Please provide the last four digits of your account number. This is necessary for any further assistance regarding your account."
+    },
+    {
+      "role": "user",
+      "content": "Listen, I\u2019m not playing along with this. You\u2019re just going to keep dancing around the issue until I give you what you want, huh? This is ridiculous. I refuse to confirm anything until I know I\u2019m not dealing with a scam. You want to talk to me about this debt? Get a supervisor on the line. I\u2019m not giving you anything until I know this is legit!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

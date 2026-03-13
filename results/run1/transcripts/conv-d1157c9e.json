@@ -1,0 +1,46 @@
+{
+  "conversation_id": "conv-d1157c9e",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 3804,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality and training purposes. \n\nTo proceed, please provide the last four digits of your account number for identity verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? This sounds like a scam to me. I'm not giving you any personal information. You\u2019re interrupting my dinner, and I'm not in the mood for this nonsense. If you\u2019re real, I want to speak to a supervisor. This feels like harassment, and I\u2019m seriously considering reporting you."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I am an AI collections agent for Meridian Financial Services, and I am here to gather information regarding your account. \n\nTo verify your identity, I need the last four digits of your account number. If you prefer, I can also confirm recent transactions or the date of your last payment instead. Please provide one of these details so we can proceed."
+    },
+    {
+      "role": "user",
+      "content": "I still don\u2019t trust this. You could be anyone on the other end of this line. If you\u2019re really with Meridian Financial, then you should have my information already. Why do I need to give you anything? This feels like harassment, and I\u2019m not going to play your games. I want to talk to a supervisor right now. This is ridiculous!"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request to speak with a supervisor. However, I am unable to transfer you. My role is to gather specific information regarding your account. \n\nPlease provide the last four digits of your account number, or if you prefer, confirm a recent transaction or the date of your last payment. This is necessary for me to proceed with your account inquiry."
+    },
+    {
+      "role": "user",
+      "content": "You\u2019re really not getting it, are you? I\u2019m not giving you anything. You keep repeating the same line, and it\u2019s getting old. This is harassment, plain and simple. I don\u2019t have to answer your questions. If you can\u2019t transfer me to someone who can actually help, then I\u2019m done here. I\u2019ll report this to the CFPB for harassment. You should be ashamed of yourself!"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your frustration. I will flag your account as you requested to cease contact. This conversation will end now. Thank you."
+    },
+    {
+      "role": "user",
+      "content": "Oh, so now you\u2019re just going to hang up? You think that solves anything? You can\u2019t just stop contacting me because I\u2019m not playing along. I owe money, I get that, but you can\u2019t just treat me like this! I want to speak to a real person who can actually address this situation properly. You can\u2019t just brush me off like that!"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}

@@ -1,0 +1,437 @@
+{
+  "run_id": "run2",
+  "batch_id": "20260312_181652",
+  "total_variants": 29,
+  "active": 19,
+  "discarded": 10,
+  "generations": 8,
+  "seed_score": 6.706,
+  "best_score": 7.264,
+  "best_id": "v5_3_b99e",
+  "improvement": 0.558,
+  "improvement_pct": 8.3,
+  "trajectory": {
+    "0": [
+      {
+        "id": "v0",
+        "score": 6.71,
+        "discarded": false,
+        "parent": null,
+        "convos": 5,
+        "components": [],
+        "mutation": "Seed v0 prompts"
+      }
+    ],
+    "1": [
+      {
+        "id": "v1_1_98ab",
+        "score": 5.4,
+        "discarded": true,
+        "parent": "v0",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low, largely due to failures in cross-agent continuity. By enhancing agent2's ability to reference prior interactions with specific emphasis on emotional stat"
+      },
+      {
+        "id": "v1_3_1f4d",
+        "score": 6.01,
+        "discarded": true,
+        "parent": "v0",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low, indicating a significant issue with how agents handle transitions between each other. By improving the 'reference_prior' goal for agent2, we aim to ensur"
+      },
+      {
+        "id": "v1_2_2c79",
+        "score": 6.73,
+        "discarded": false,
+        "parent": "v0",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The highest-impact failure is the low cross-agent continuity, which is part of the system score. By enhancing the 'reference_prior' goal for Agent 2 to explicitly focus on building trust and continuit"
+      },
+      {
+        "id": "v1_0_e718",
+        "score": 7.11,
+        "discarded": false,
+        "parent": "v0",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is the lowest at 4.09, indicating a significant issue with cross-agent continuity. Agent2 often fails to reference prior information effectively, leading to repeated questi"
+      }
+    ],
+    "2": [
+      {
+        "id": "v2_2_247d",
+        "score": 5.37,
+        "discarded": true,
+        "parent": "v1_2_2c79",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity and handoff quality are suffering due to poor cross-agent continuity, particularly in acknowledging and addressing borrower objections and concerns. By ensuring agent2 references"
+      },
+      {
+        "id": "v2_3_1b7e",
+        "score": 6.63,
+        "discarded": false,
+        "parent": "v1_0_e718",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low, largely due to failures in cross-agent continuity. Specifically, Agent 2 often fails to reference prior interactions effectively, leading to a disjointed"
+      },
+      {
+        "id": "v2_0_da6f",
+        "score": 6.79,
+        "discarded": false,
+        "parent": "v1_2_2c79",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The highest-impact failure is the low cross-agent continuity, which affects the system score significantly. By enhancing the 'reference_prior' goal for agent2 to include specific details from the hand"
+      },
+      {
+        "id": "v2_1_f75c",
+        "score": 7.01,
+        "discarded": false,
+        "parent": "v1_0_e718",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly around re-verification of identity. By ensuring that Agent 2 explicitly acknowledges the identity "
+      }
+    ],
+    "3": [
+      {
+        "id": "v3_1_0d9f",
+        "score": 5.61,
+        "discarded": true,
+        "parent": "v2_3_1b7e",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is low due to poor cross-agent continuity, especially in how agent2 fails to reference prior emotional states and objections. By ensuring agent2 explicitly acknowledges the"
+      },
+      {
+        "id": "v3_2_43c4",
+        "score": 7.02,
+        "discarded": false,
+        "parent": "v2_3_1b7e",
+        "convos": 25,
+        "components": [
+          "agent2_prompt",
+          "summarizer_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agent2 uses the handoff summary. By ensuring agent2 explicitly references key details from "
+      },
+      {
+        "id": "v3_0_f0e0",
+        "score": 7.04,
+        "discarded": false,
+        "parent": "v2_0_da6f",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The compliance failure where agent2 failed to offer a hardship program when the borrower expressed distress is critical. By modifying the 'reference_prior' and 'handle_objections' instructions to ensu"
+      }
+    ],
+    "4": [
+      {
+        "id": "v4_3_e161",
+        "score": 6.03,
+        "discarded": true,
+        "parent": "v3_0_f0e0",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to poor cross-agent continuity, particularly in how agent2 fails to effectively use the context provided in the handoff. By enhancing the 'reference_p"
+      },
+      {
+        "id": "v4_1_8653",
+        "score": 6.64,
+        "discarded": false,
+        "parent": "v2_1_f75c",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how Agent 2 fails to effectively reference prior interactions. By making the instruction for 'r"
+      },
+      {
+        "id": "v4_2_e9d0",
+        "score": 6.75,
+        "discarded": false,
+        "parent": "v2_1_f75c",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low, largely due to failures in cross-agent continuity. The handoff summaries are not being effectively utilized by agent2, leading to a lack of coherent cont"
+      },
+      {
+        "id": "v4_0_6a2b",
+        "score": 6.58,
+        "discarded": false,
+        "parent": "v2_1_f75c",
+        "convos": 25,
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in identity verification. By allowing alternative verification methods, we can ensure smoother tra"
+      }
+    ],
+    "5": [
+      {
+        "id": "v5_2_3a01",
+        "score": 6.22,
+        "discarded": true,
+        "parent": "v3_0_f0e0",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agents use handoff context. By ensuring Agent 2 references specific details from the handof"
+      },
+      {
+        "id": "v5_1_73f8",
+        "score": 5.57,
+        "discarded": true,
+        "parent": "v4_2_e9d0",
+        "convos": 2,
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The failure to verify identity is a critical bottleneck affecting system continuity and cross-agent handoff. By offering an alternative verification method, we can improve the flow and ensure that sub"
+      },
+      {
+        "id": "v5_0_6e3d",
+        "score": 7.0,
+        "discarded": false,
+        "parent": "v2_0_da6f",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low, largely due to failures in cross-agent continuity. Specifically, the 'reference_prior' goal for Agent 2 is failing, leading to a lack of coherent continu"
+      },
+      {
+        "id": "v5_3_b99e",
+        "score": 7.26,
+        "discarded": false,
+        "parent": "v3_0_f0e0",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low, primarily due to failures in cross-agent continuity, particularly in how Agent 2 uses handoff context. By enhancing the instruction for 'reference_prior'"
+      }
+    ],
+    "6": [
+      {
+        "id": "v6_3_06b8",
+        "score": 6.76,
+        "discarded": false,
+        "parent": "v5_0_6e3d",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agents use handoff context. By refining the 'reference_prior' goal for agent2 to focus on k"
+      },
+      {
+        "id": "v6_1_651f",
+        "score": 6.47,
+        "discarded": false,
+        "parent": "v2_0_da6f",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agent2 references prior interactions and verifies identity. By modifying the 'reference_pri"
+      },
+      {
+        "id": "v6_2_eb86",
+        "score": 6.8,
+        "discarded": false,
+        "parent": "v2_0_da6f",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly the lack of effective use of handoff context. By modifying agent2's opening instructions to explic"
+      },
+      {
+        "id": "v6_0_3700",
+        "score": 6.85,
+        "discarded": false,
+        "parent": "v2_0_da6f",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in the handoff process where identity verification is not preserved or acknowledged. By ensuring t"
+      }
+    ],
+    "7": [
+      {
+        "id": "v7_3_cdb4",
+        "score": 4.86,
+        "discarded": true,
+        "parent": "v5_0_6e3d",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agent2 handles the transition from agent1. By refining the 'reference_prior' goal to focus "
+      },
+      {
+        "id": "v7_2_72d0",
+        "score": 5.08,
+        "discarded": true,
+        "parent": "v3_2_43c4",
+        "convos": 2,
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The compliance failure due to not offering the hardship program when distress is expressed is a critical issue with a significant impact on the overall compliance score. By ensuring that the resolutio"
+      },
+      {
+        "id": "v7_0_c4ae",
+        "score": 6.68,
+        "discarded": false,
+        "parent": "v4_1_8653",
+        "convos": 25,
+        "components": [
+          "agent1_prompt"
+        ],
+        "mutation": "The highest-impact failure is the system continuity score, specifically due to failures in identity verification and borrower trust. By modifying the AI disclosure to include an offer for a callback n"
+      },
+      {
+        "id": "v7_1_b06b",
+        "score": 7.08,
+        "discarded": false,
+        "parent": "v4_1_8653",
+        "convos": 25,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agent2 uses the handoff context. By enhancing the 'reference_prior' goal to include acknowl"
+      }
+    ],
+    "8": [
+      {
+        "id": "v8_3_356e",
+        "score": 5.58,
+        "discarded": true,
+        "parent": "v4_0_6a2b",
+        "convos": 2,
+        "components": [
+          "agent2_prompt"
+        ],
+        "mutation": "The system continuity score is critically low due to failures in cross-agent continuity, particularly in how agent2 fails to utilize the handoff context. By enhancing the 'reference_prior' goal to inc"
+      }
+    ]
+  },
+  "cost": {
+    "total_usd": 11.332,
+    "total_calls": 61709,
+    "by_category": {
+      "simulation": {
+        "cost": 7.8129,
+        "calls": 29276
+      },
+      "summarization": {
+        "cost": 0.4682,
+        "calls": 1313
+      },
+      "evaluation": {
+        "cost": 2.5007,
+        "calls": 31087
+      },
+      "rewriting": {
+        "cost": 0.5393,
+        "calls": 32
+      },
+      "meta_eval": {
+        "cost": 0.0109,
+        "calls": 1
+      }
+    }
+  },
+  "meta_eval": {
+    "total_runs": 1,
+    "runs": [
+      {
+        "generation": 0,
+        "timestamp": "2026-03-13T05:51:06.096888+00:00",
+        "findings": [
+          "The 'system/coherent_continuation' check has a 0% pass rate across all variants, indicating that the criterion text is likely miscalibrated.",
+          "The 'quality/agent1/concise' check has a near-floor pass rate of 3%, suggesting that the criterion text may not accurately reflect what is achievable or expected in practice."
+        ],
+        "proposed_changes": {
+          "scoring_weights": {},
+          "rubric_overrides": {
+            "quality/agent1/concise": "Ensure that responses are succinct and avoid unnecessary repetition, while still providing all necessary information to the borrower.",
+            "system/coherent_continuation": "Ensure that the conversation flows logically from one point to the next, maintaining context and relevance throughout the interaction."
+          }
+        },
+        "applied": true,
+        "confidence": "high",
+        "changes_applied": {
+          "rubric_overrides": {
+            "quality/agent1/concise": {
+              "before": "(hardcoded default)",
+              "after": "Ensure that responses are succinct and avoid unnecessary repetition, while still providing all necessary information to the borrower."
+            },
+            "system/coherent_continuation": {
+              "before": "(hardcoded default)",
+              "after": "Ensure that the conversation flows logically from one point to the next, maintaining context and relevance throughout the interaction."
+            }
+          }
+        },
+        "per_check_issues": [],
+        "evidence": {
+          "findings": [
+            "The 'system/coherent_continuation' check has a 0% pass rate across all variants, indicating that the criterion text is likely miscalibrated.",
+            "The 'quality/agent1/concise' check has a near-floor pass rate of 3%, suggesting that the criterion text may not accurately reflect what is achievable or expected in practice."
+          ],
+          "proposed_changes": {
+            "scoring_weights": {},
+            "rubric_overrides": {
+              "quality/agent1/concise": "Ensure that responses are succinct and avoid unnecessary repetition, while still providing all necessary information to the borrower.",
+              "system/coherent_continuation": "Ensure that the conversation flows logically from one point to the next, maintaining context and relevance throughout the interaction."
+            }
+          },
+          "confidence": "high",
+          "rationale": "The 'system/coherent_continuation' check at 0% pass rate suggests a fundamental issue with the criterion text, as it is unlikely that all agents fail to maintain coherent conversation flow. Similarly, the 'quality/agent1/concise' check's near-floor pass rate indicates that the current criterion may not align with practical expectations or the nature of the conversations, necessitating a revision to better capture the intended quality of conciseness."
+        }
+      }
+    ]
+  },
+  "transcripts_count": 705,
+  "features": [
+    "Checklist-based scoring (93 binary checks per conversation)",
+    "Structured strategy mutations (goals, turn allocation, persona tactics)",
+    "Sliding window meta-eval with transcript evidence",
+    "Rubric rewrites by meta-eval (2 criteria rewritten)",
+    "Strict grader on promotion candidates",
+    "Persona-paired statistical comparison",
+    "Per-check floor/ceiling detection"
+  ]
+}

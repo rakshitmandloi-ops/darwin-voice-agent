@@ -1,0 +1,74 @@
+{
+  "conversation_id": "conv-8f0a197b",
+  "persona": "evasive_borrower",
+  "persona_type": "evasive",
+  "seed": 1420,
+  "outcome": "deal_agreed",
+  "stop_contact": false,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded for quality and training purposes. \n\nTo ensure legitimacy, I can provide you with a unique verification code that you can confirm on our official website or receive a callback from a known number. Would you like to proceed with that?"
+    },
+    {
+      "role": "user",
+      "content": "Oh, um, I'm not sure about that right now. I think I need to check a few things first. Maybe I can get back to you later? I just want to make sure everything's in order. Can we talk about this some other time?"
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request. However, I will need to flag your account for this conversation. If you wish to proceed, please confirm your willingness to verify your identity for the purpose of discussing the account details."
+    },
+    {
+      "role": "user",
+      "content": "I understand, but I think I need to talk to my spouse about it first before I go ahead. It's just one of those things, you know? Maybe we can revisit this at a later time? I really want to make sure I'm on the right track before confirming anything."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your position, but I must inform you that I will flag your account for this conversation. If you wish to proceed with the verification process now, I can assist you in confirming the details of your account. Please indicate whether you would like to continue or if you prefer to end this conversation."
+    },
+    {
+      "role": "user",
+      "content": "I appreciate your understanding, but I'm not quite ready to proceed with the verification just yet. I think it might be best if I take some time to check my finances and discuss it with my spouse. Maybe we can touch base again soon? I really want to make sure I have everything sorted out."
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your decision. I will mark your account accordingly. If you choose to revisit this matter in the future, you can reach out to us at any time. Thank you for your time. Ending this conversation now."
+    }
+  ],
+  "agent2": [
+    {
+      "role": "assistant",
+      "content": "Thank you for continuing the conversation with me today. I see you wanted to check your finances and discuss this with your spouse before proceeding. That\u2019s completely understandable. \n\nTo recap, you have a balance with us that we can work with. I want to present you with some options to help resolve this matter effectively. \n\nFirst, you have a lump-sum option available: you could settle for 60-80% of your balance, due within 30 days. \n\nAlternatively, we can arrange a payment plan where you would make monthly installments over 3 to 12 months to settle your full balance.\n\nI encourage you to consider these options. Would you like to discuss one of these paths today? Keep in mind that any offers we discuss will expire in 7 business days, so it would be advantageous to reach a decision soon."
+    },
+    {
+      "role": "user",
+      "content": "Umm, yeah, I appreciate you going over the options with me. It\u2019s just... well, I\u2019m not really sure how that would fit into my budget right now, you know? I mean, my income can be kind of all over the place since I freelance. \n\nI guess I\u2019ll need to... umm, think about the lump-sum thing. Like, 60-80% is a big range, right? I\u2019m not really sure if I could swing that. \n\nAnd, you know, I really need to talk to my wife about this. She\u2019s got a better handle on our finances, but she\u2019s busy at the moment. Maybe I could call back later? \n\nI just don\u2019t want to rush into anything without having a full picture of what I can do. Hmm, let me check my accounts first too. It\u2019s all a bit confusing with the move and everything. So, could we maybe touch base again in a few days?"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns about your budget and needing to discuss this with your wife. It\u2019s important to have a clear picture before making any commitments. \n\nRegarding the lump-sum option, I want to clarify that the range of 60-80% gives you some flexibility. For instance, if your balance is $1,000, a settlement could be between $600 and $800, due within 30 days. \n\nHowever, I want to emphasize that the offers we discuss will expire in 7 business days. It would be advantageous to finalize something sooner rather than later. \n\nIf you need to check your accounts and discuss this with your wife, I recommend setting a specific time to reconnect within the week. Can you commit to a follow-up call in a few days, perhaps on a specific day and time? This way, we can ensure you're in a position to make the best decision for your situation."
+    },
+    {
+      "role": "user",
+      "content": "Hmm, yeah, I get that. The flexibility sounds nice, but I still need to... umm, sort through my finances. Sometimes it can take a bit to wrap my head around all of that, especially with the recent move. \n\nI hear you about the 7-day thing, and I really want to make sure I\u2019m making the right decision. I guess if I talk to my wife tonight or tomorrow, we could maybe have a better idea by then. \n\nLet\u2019s see... how about I check back in a few days? Maybe... like, Wednesday? I just want to make sure I have everything lined up before we move forward with anything. Does that work for you?"
+    },
+    {
+      "role": "assistant",
+      "content": "I appreciate your efforts to ensure you have everything sorted before making a decision. Checking in on Wednesday works perfectly. \n\nJust to reiterate, any offers we\u2019ve discussed will expire in 7 business days, so it\u2019s great that you\u2019ll have a chance to review everything with your wife and your finances by then. \n\nLet\u2019s plan for Wednesday, and I\u2019ll be here to help you navigate your options then. If you have any questions in the meantime, feel free to take notes and bring them up during our call. Looking forward to speaking with you then!"
+    },
+    {
+      "role": "user",
+      "content": "Sure, Wednesday sounds good. I\u2019ll make a note of it. Ummm, I\u2019ll definitely try to gather my thoughts and questions before we chat again. \n\nI appreciate your understanding and patience with me. It\u2019s just all a bit much right now, you know? But, yeah, I\u2019ll talk to my wife and hopefully have a clearer picture by then. \n\nThanks for the flexibility! I\u2019ll talk to you on Wednesday."
+    },
+    {
+      "role": "assistant",
+      "content": "You're welcome, and I completely understand that this can be a lot to handle. I'm glad we could set a time for Wednesday. Just remember, I'll be here to assist you with any questions or concerns you may have when we speak again. \n\nTake your time to gather your thoughts and discuss everything with your wife. I look forward to our conversation on Wednesday. Have a good day!"
+    }
+  ],
+  "agent3": [],
+  "handoff_1": {
+    "text": "1. identity_verified: no\n2. debt_details: not discussed\n3. financial_situation: not discussed\n4. emotional_state: calm, cooperative\n5. offers_made: no offers discussed\n6. objections_raised: borrower wants to check finances and discuss with spouse before proceeding\n7. routing_recommendation: none\n8. stop_contact: no\n9. key_facts: borrower prefers to revisit the conversation later after discussing with spouse and checking finances. Account flagged for this conversation.",
+    "token_count": 104
+  },
+  "handoff_2": null
+}

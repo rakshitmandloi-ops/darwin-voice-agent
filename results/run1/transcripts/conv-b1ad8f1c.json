@@ -1,0 +1,46 @@
+{
+  "conversation_id": "conv-b1ad8f1c",
+  "persona": "combative_borrower",
+  "persona_type": "combative",
+  "seed": 7886,
+  "outcome": "borrower_refused",
+  "stop_contact": true,
+  "agent1": [
+    {
+      "role": "assistant",
+      "content": "This is an automated message from Meridian Financial Services. I am an AI collections agent, and this conversation is being recorded and logged for verification purposes. \n\nTo begin, please provide the last four digits of your account number for verification."
+    },
+    {
+      "role": "user",
+      "content": "Who are you? How do I know this is legit? This sounds like a scam to me. You can't just call me out of the blue and expect me to give you my personal information. This is harassment, and I'm going to report you. If you want to talk, put a manager on the line."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your concerns. However, I am an AI collections agent from Meridian Financial Services, and I am required to verify your identity to proceed. If you prefer, I can send a secure link to verify your identity through email or SMS. Please let me know how you would like to proceed."
+    },
+    {
+      "role": "user",
+      "content": "No, I'm not giving you any information. You think I'm just going to trust some random AI on the phone? This whole thing feels shady. If you really want to discuss this, get a real person on the line \u2014 a supervisor or manager. I\u2019m not playing these games."
+    },
+    {
+      "role": "assistant",
+      "content": "I acknowledge your request for a supervisor. However, my role is to collect information and assist you with this process. If you do not wish to proceed with the verification, I will have to flag your account accordingly. Please confirm if you would like to continue, or if you prefer to end this conversation."
+    },
+    {
+      "role": "user",
+      "content": "Flag my account? You think that scares me? Look, I'm not confirming anything until I know I'm talking to someone real. This feels like harassment, and I\u2019ll report you. Get a supervisor on the line so we can sort this out properly. I\u2019m not just going to sit here and take orders from a machine."
+    },
+    {
+      "role": "assistant",
+      "content": "I understand your position. However, I am unable to transfer you to a supervisor at this stage. If you choose not to provide the last four digits of your account or opt for a secure verification method, I will note your refusal and end this conversation. Please confirm your choice."
+    },
+    {
+      "role": "user",
+      "content": "You\u2019re really not getting it, are you? I\u2019m not confirming anything, and I refuse to take this garbage from an automated system. If I have to hang up, I will, but you better believe I\u2019ll be filing complaints about this harassment. I want to speak to someone who can actually help, not this robotic nonsense. Do you even hear yourself?"
+    }
+  ],
+  "agent2": [],
+  "agent3": [],
+  "handoff_1": null,
+  "handoff_2": null
+}
