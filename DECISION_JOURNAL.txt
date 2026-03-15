@@ -26,6 +26,8 @@ Tried A briefly — latency was 3-5 sec per turn, and Deepgram/ElevenLabs cost e
 
 Went with B. Same agent_respond() code path. Same prompt. The only thing voice adds is STT noise and TTS latency — neither affects the quality of the agent's decision-making, which is what evolution optimizes. Voice integration is for production demo, not for training the agents.
 
+Also means current eval is purely text-based — it ignores tone/prosody/pacing that would matter in a real voice call. This is a conscious tradeoff: voice-specific qualities (pauses, emphasis, interruption handling) are not scored. We optimize for WHAT the agent says, not HOW it sounds. Evaluating tone would require either speech synthesis + audio analysis pipeline (expensive, slow, and the audio models aren't reliable enough to grade on) or human evaluators (can't automate). Since the underlying LLM prompt is the same in both text and voice mode, improving the text behavior directly improves voice behavior — minus the prosody layer. Acceptable tradeoff to stay within $20 budget and keep iteration speed high.
+
 **This saved ~$15 and probably 4 hours of runtime.**
 
 ---
