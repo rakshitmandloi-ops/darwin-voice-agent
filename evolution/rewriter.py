@@ -35,6 +35,9 @@ async def rewrite(
     recent_mutations: list[str] | None = None,
     worst_conversations: list[dict] | None = None,
     settings: Settings | None = None,
+    lessons: list[str] | None = None,
+    crossover_parent: ArchiveEntry | None = None,
+    best_conversations: list[dict] | None = None,
 ) -> MutationResult:
     """
     Propose a mutation to the parent's strategy.
@@ -55,6 +58,9 @@ async def rewrite(
         recent_mutations=recent_mutations or [],
         worst_conversations=worst_conversations or [],
         settings=s,
+        lessons=lessons or [],
+        crossover_parent=crossover_parent,
+        best_conversations=best_conversations or [],
     )
 
     response = await tracker.tracked_completion(
@@ -100,7 +106,12 @@ WHAT YOU CAN CHANGE:
 - Persona tactics
 - Summarizer field priorities and instructions
 - Opening lines
-- Rules (append only)
+- Agent-level behavioral rules (append only — never remove existing rules)
+
+WHAT YOU ABSOLUTELY CANNOT CHANGE:
+- Compliance rules (R1-R8) — these are PERMANENTLY IMMUTABLE
+- Scoring weights — only meta-eval can adjust these
+- Rubric criteria text — only meta-eval can rewrite these
 
 OUTPUT FORMAT:
 {
@@ -114,6 +125,9 @@ OUTPUT FORMAT:
   "failures_addressed": ["the specific 0% criteria being fixed"]
 }
 
+ESCALATION RULE:
+If the LESSONS show that the same component (e.g., agent2_prompt) was changed 3+ times without improvement, you MUST target a DIFFERENT component. Try summarizer_prompt, agent1_prompt, or agent3_prompt instead.
+
 SCORING WEIGHTS for prioritization:
   goal: 30%, compliance: 20%, quality: 20%, handoff: 15%, system: 15%"""
 
@@ -124,6 +138,9 @@ def _build_rewriter_prompt(
     recent_mutations: list[str],
     worst_conversations: list[dict],
     settings: Settings,
+    lessons: list[str] | None = None,
+    crossover_parent: ArchiveEntry | None = None,
+    best_conversations: list[dict] | None = None,
 ) -> str:
     """Build the full prompt for the rewriter."""
     ac = parent.variant_config.agent_config
@@ -131,7 +148,41 @@ def _build_rewriter_prompt(
 
     parts = [format_trajectory_for_rewriter(trajectory)]
 
-    # Show current strategy if available
+    # --- Technique 1: GEPA-style Reflective Lessons ---
+    if lessons:
+        parts.append("\n## LESSONS FROM PREVIOUS GENERATIONS")
+        parts.append("These are insights from past mutations — use them to guide your changes.")
+        for lesson in lessons[-10:]:  # Keep last 10 lessons
+            parts.append(f"  - {lesson}")
+
+    # --- Technique 2: EvoPrompt-style Crossover ---
+    if crossover_parent is not None:
+        parts.append("\n## CROSSOVER MODE")
+        parts.append("You are merging the BEST traits from TWO parents.")
+        parts.append(f"Parent A: {parent.version_id} (score: {parent.mean_score:.2f})")
+        parts.append(f"Parent B: {crossover_parent.version_id} (score: {crossover_parent.mean_score:.2f})")
+        # Show Parent B's strategy
+        cp_ac = crossover_parent.variant_config.agent_config
+        if cp_ac.strategy_json:
+            try:
+                from agents.strategy import PipelineStrategy
+                cp_strategy = PipelineStrategy.model_validate_json(cp_ac.strategy_json)
+                parts.append("\n### Parent B Strategy:")
+                for name, agent in [("agent1", cp_strategy.agent1), ("agent2", cp_strategy.agent2), ("agent3", cp_strategy.agent3)]:
+                    parts.append(f"  {name}: tone={agent.tone}, goals={[g.name for g in agent.goals]}")
+            except Exception:
+                parts.append(f"  Parent B prompts: agent1=[{count_tokens(cp_ac.agent1_prompt)} tok], agent2=[{count_tokens(cp_ac.agent2_prompt)} tok]")
+        # Show metric comparison
+        parent_metrics = trajectory.scores_by_metric
+        parts.append("\nParent A metrics: " + ", ".join(f"{k}={v:.2f}" for k, v in parent_metrics.items()))
+        cp_trajectory_metrics = {}
+        if crossover_parent.scores:
+            # Approximate: use mean score as a proxy
+            cp_trajectory_metrics["mean_score"] = crossover_parent.mean_score
+        parts.append("Parent B metrics: " + ", ".join(f"{k}={v:.2f}" for k, v in cp_trajectory_metrics.items()))
+        parts.append("Merge the BEST traits from Parent A and Parent B. Combine what works from each.")
+
+    # Show current strategy — FULL, no truncation
     if ac.strategy_json:
         try:
             from agents.strategy import PipelineStrategy
@@ -142,57 +193,107 @@ def _build_rewriter_prompt(
                 parts.append(f"  Tone: {agent.tone}")
                 parts.append(f"  Goals (priority order):")
                 for g in sorted(agent.goals, key=lambda g: g.priority):
-                    parts.append(f"    {g.priority}. {g.name}: max_turns={g.max_turns}, instruction=\"{g.instruction[:80]}\"")
+                    parts.append(f"    {g.priority}. {g.name}: max_turns={g.max_turns}, instruction=\"{g.instruction}\"")
                 parts.append(f"  Persona tactics:")
                 for t in agent.persona_tactics:
-                    parts.append(f"    {t.persona_type}: {t.approach} — {t.special_instructions[:60]}")
+                    parts.append(f"    {t.persona_type}: {t.approach} — {t.special_instructions}")
                 parts.append("")
             parts.append("### Summarizer fields (priority order):")
             for f in sorted(strategy.summarizer.fields, key=lambda f: f.priority):
-                parts.append(f"    {f.priority}. {f.name}: max_tokens={f.max_tokens}")
+                parts.append(f"    {f.priority}. {f.name}: max_tokens={f.max_tokens}, instruction=\"{f.instruction}\"")
         except Exception:
             parts.append("\n## CURRENT PROMPTS (no structured strategy available)\n")
-            parts.append(ac.agent1_prompt[:500])
+            parts.append(ac.agent1_prompt)
     else:
         parts.append("\n## CURRENT PROMPTS\n")
-        parts.append(f"Agent 1 [{count_tokens(ac.agent1_prompt)} tok]: {ac.agent1_prompt[:300]}")
-        parts.append(f"Agent 2 [{count_tokens(ac.agent2_prompt)} tok]: {ac.agent2_prompt[:300]}")
-        parts.append(f"Agent 3 [{count_tokens(ac.agent3_prompt)} tok]: {ac.agent3_prompt[:300]}")
+        parts.append(f"Agent 1 [{count_tokens(ac.agent1_prompt)} tok]:\n{ac.agent1_prompt}")
+        parts.append(f"\nAgent 2 [{count_tokens(ac.agent2_prompt)} tok]:\n{ac.agent2_prompt}")
+        parts.append(f"\nAgent 3 [{count_tokens(ac.agent3_prompt)} tok]:\n{ac.agent3_prompt}")
 
-    # Include worst conversation transcripts so rewriter can see WHAT went wrong
-    if worst_conversations:
-        parts.append("\n## WORST CONVERSATIONS (actual transcripts showing failures)")
-        for i, conv in enumerate(worst_conversations[:3]):  # Max 3 to stay within context
+    # --- Technique 4: Bootstrap Few-Shot Best Conversations ---
+    if best_conversations:
+        parts.append(f"\n## BEST CONVERSATIONS (examples of ideal behavior, {len(best_conversations)} total)")
+        parts.append("These show what WORKS — the rewriter should preserve and extend these patterns.")
+        for i, conv in enumerate(best_conversations[:3]):  # Show at most 3
             persona = conv.get("persona_type", "?")
             score = conv.get("total", 0)
-            parts.append(f"\n### Conversation {i+1}: {persona} (score: {score:.2f})")
+            parts.append(f"\n### Best {i+1}: {persona} (score: {score:.2f})")
+            # Show only agent messages (brief), no full borrower back-and-forth
+            for stage in ["agent1", "agent2", "agent3"]:
+                msgs = conv.get(stage, [])
+                agent_msgs = [m for m in msgs if m.get("role") == "assistant"]
+                if agent_msgs:
+                    parts.append(f"  {stage} agent messages:")
+                    for m in agent_msgs:
+                        content = m.get("content", "")
+                        # Keep brief — truncate to 200 chars
+                        if len(content) > 200:
+                            content = content[:200] + "..."
+                        parts.append(f"    [AGENT] {content}")
 
-            # Show failing criteria for this conversation
+    # ALL conversations — ZERO truncation on content
+    # gpt-4o has 128K context; 8 conversations fit easily
+    if worst_conversations:
+        parts.append(f"\n## ALL CONVERSATIONS ({len(worst_conversations)} total, sorted worst-first)")
+        parts.append("Each conversation includes FULL transcripts, ALL messages, COMPLETE handoff summaries, and ALL failing criteria.")
+
+        # Budget: estimate tokens and fit as many as possible within ~80K
+        # (leave room for system prompt + strategy + response)
+        MAX_CONVERSATION_TOKENS = 80_000
+        token_budget_used = count_tokens("\n".join(parts))
+
+        for i, conv in enumerate(worst_conversations):
+            persona = conv.get("persona_type", "?")
+            score = conv.get("total", 0)
+
+            # Build this conversation's full text
+            conv_parts = []
+            conv_parts.append(f"\n### Conversation {i+1}/{len(worst_conversations)}: {persona} (score: {score:.2f})")
+
+            # Full failing criteria
             failing = conv.get("failing_criteria", [])
             if failing:
-                parts.append(f"  FAILING CRITERIA: {', '.join(failing)}")
+                conv_parts.append(f"  FAILING CRITERIA: {', '.join(failing)}")
 
-            # Show each agent's messages (truncated)
+            # --- Technique 3: TextGrad-style Backward Feedback ---
+            textual_gradients = conv.get("textual_gradients", [])
+            if textual_gradients:
+                conv_parts.append("  TEXTUAL GRADIENTS (what went wrong and how to fix it):")
+                for grad in textual_gradients:
+                    conv_parts.append(f"    {grad}")
+
+            # Full agent transcripts — EVERY message, ZERO truncation
             for stage, label in [("agent1", "Agent 1 (Assessment)"), ("agent2", "Agent 2 (Resolution)"), ("agent3", "Agent 3 (Final Notice)")]:
                 msgs = conv.get(stage, [])
                 if not msgs:
                     continue
-                parts.append(f"\n  --- {label} ---")
-                for m in msgs[:8]:  # Max 8 messages per stage
+                conv_parts.append(f"\n  --- {label} ({len(msgs)} messages) ---")
+                for m in msgs:
                     role = "AGENT" if m.get("role") == "assistant" else "BORROWER"
-                    content = m.get("content", "")[:200]  # Truncate long messages
-                    parts.append(f"  [{role}] {content}")
+                    content = m.get("content", "")  # FULL content, no truncation
+                    conv_parts.append(f"  [{role}] {content}")
 
-            # Show handoff
+            # Full handoff summaries — no truncation
             h1 = conv.get("handoff_1")
             if h1:
-                parts.append(f"\n  --- Handoff 1 ({h1.get('token_count', '?')} tok) ---")
-                parts.append(f"  {h1.get('text', '')[:200]}")
+                conv_parts.append(f"\n  --- Handoff 1 ({h1.get('token_count', '?')} tok) ---")
+                conv_parts.append(f"  {h1.get('text', '')}")
 
             h2 = conv.get("handoff_2")
             if h2:
-                parts.append(f"\n  --- Handoff 2 ({h2.get('token_count', '?')} tok) ---")
-                parts.append(f"  {h2.get('text', '')[:200]}")
+                conv_parts.append(f"\n  --- Handoff 2 ({h2.get('token_count', '?')} tok) ---")
+                conv_parts.append(f"  {h2.get('text', '')}")
+
+            conv_text = "\n".join(conv_parts)
+            conv_tokens = count_tokens(conv_text)
+
+            # Check if adding this conversation would exceed budget
+            if token_budget_used + conv_tokens > MAX_CONVERSATION_TOKENS:
+                parts.append(f"\n[Stopped at {i}/{len(worst_conversations)} conversations due to context limit. {len(worst_conversations) - i} remaining omitted.]")
+                break
+
+            parts.extend(conv_parts)
+            token_budget_used += conv_tokens
 
     if recent_mutations:
         parts.append("\n## PREVIOUS ATTEMPTS (these did NOT improve scores — do NOT repeat)")

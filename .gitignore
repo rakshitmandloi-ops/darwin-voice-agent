@@ -1,6 +1,10 @@
 .env
 __pycache__/
 *.pyc
-logs/
 .venv/
 *.egg-info/
+.pytest_cache/
+logs/
+*.backup
+darwin-voice-agent-backup-pre-workflow/
+*.DS_Store

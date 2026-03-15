@@ -5,3 +5,12 @@ numpy
 python-dotenv
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
+
+# Production layers
+temporalio>=1.4.0
+chainlit>=1.0.0
+pipecat-ai[deepgram,elevenlabs,daily]
+
+# Testing
+pytest
+pytest-asyncio

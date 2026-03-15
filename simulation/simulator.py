@@ -12,8 +12,10 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from agents.prompts import count_tokens, enforce_budget, log_token_usage
+from agents.core import agent_respond
+from agents.prompts import count_tokens, log_token_usage
 from config import Settings, get_settings
+from data.borrowers import borrower_context_block, borrower_persona_context, get_random_borrower
 from evaluation.cost_tracker import CostTracker
 from handoff.summarizer import summarize_for_handoff
 from models import (
@@ -49,6 +51,8 @@ async def _run_agent_conversation(
     tracker: CostTracker,
     settings: Settings,
     seed: int,
+    borrower_context: str | None = None,
+    borrower_persona_ctx: str | None = None,
 ) -> Transcript:
     """
     Run a multi-turn conversation between an agent and a simulated borrower.
@@ -60,55 +64,41 @@ async def _run_agent_conversation(
     The borrower simulation uses a separate message list (not budget-constrained)
     since the borrower is our test harness, not the deployed agent.
     """
-    # --- Build agent messages ---
-    agent_messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
-
-    if handoff_context:
-        agent_messages.append({
-            "role": "system",
-            "content": f"HANDOFF CONTEXT FROM PRIOR STAGE:\n{handoff_context}",
-        })
-
     # --- Build borrower messages (separate, not budget-constrained) ---
     is_voice = agent_type == AgentType.RESOLUTION
     borrower_prompt = persona.voice_system_prompt if is_voice else persona.system_prompt
+    # Inject borrower's own account details so they can respond correctly
+    if borrower_persona_ctx:
+        borrower_prompt = f"{borrower_prompt}\n{borrower_persona_ctx}"
     borrower_messages: list[dict[str, str]] = [
         {"role": "system", "content": borrower_prompt},
     ]
 
-    # --- Token budget: enforce system prompt + handoff ≤ 2000 ---
-    # The 2000 token budget covers the INITIAL context only:
-    #   system prompt + handoff context ≤ 2000
-    # Conversation history grows separately using the LLM's own context window.
-    usage = enforce_budget(
-        prompt=system_prompt,
-        handoff=handoff_context,
-        limit=settings.tokens.max_agent,  # 2000
-        agent_name=agent_type.value,
-    )
-    log_token_usage(usage, settings)
-
     # --- Conversation loop ---
+    # conversation_history tracks assistant/user turns for agent_respond()
+    conversation_history: list[dict[str, str]] = []
     transcript_messages: list[Message] = []
 
     for turn in range(max_turns):
 
-        # --- Agent turn ---
-        agent_response = await tracker.tracked_completion(
-            model=settings.models.sim,
-            messages=agent_messages,
-            category=CostCategory.SIMULATION,
-            temperature=settings.temperature.sim,
+        # --- Agent turn (single code path via agent_respond) ---
+        agent_text = await agent_respond(
+            system_prompt=system_prompt,
+            handoff_context=handoff_context,
+            conversation_history=conversation_history,
+            agent_type=agent_type,
+            tracker=tracker,
+            settings=settings,
             metadata={"agent": agent_type.value, "turn": turn, "seed": seed},
+            borrower_context=borrower_context,
         )
-        agent_text = agent_response.choices[0].message.content or ""
 
-        agent_messages.append({"role": "assistant", "content": agent_text})
+        conversation_history.append({"role": "assistant", "content": agent_text})
         transcript_messages.append(Message(role="assistant", content=agent_text))
 
         # Live state update
         try:
-            from live_state import get_live_state
+            from evolution.live_state import get_live_state
             get_live_state().add_message("assistant", agent_text, agent_type.value)
         except Exception:
             pass
@@ -133,11 +123,11 @@ async def _run_agent_conversation(
 
             borrower_messages.append({"role": "assistant", "content": borrower_text})
             transcript_messages.append(Message(role="user", content=borrower_text))
-            agent_messages.append({"role": "user", "content": borrower_text})
+            conversation_history.append({"role": "user", "content": borrower_text})
 
             # Live state update
             try:
-                from live_state import get_live_state
+                from evolution.live_state import get_live_state
                 get_live_state().add_message("user", borrower_text, agent_type.value)
             except Exception:
                 pass
@@ -238,9 +228,17 @@ async def simulate_pipeline(
     s = settings or get_settings()
     conv_id = f"conv-{uuid.uuid4().hex[:8]}"
 
+    # Pick a random borrower for this simulation using the seed
+    # Generate per-agent context: Agent 1 gets verification, Agent 2/3 get "already verified"
+    borrower_profile = get_random_borrower(seed)
+    b_context_agent1 = borrower_context_block(borrower_profile, agent_type="agent1")
+    b_context_agent2 = borrower_context_block(borrower_profile, agent_type="agent2")
+    b_context_agent3 = borrower_context_block(borrower_profile, agent_type="agent3")
+    bp_context = borrower_persona_context(borrower_profile)
+
     # Live state
     try:
-        from live_state import get_live_state
+        from evolution.live_state import get_live_state
         ls = get_live_state()
         ls.set_simulating(agent_config.version_id, persona.persona_type.value, conv_id, "agent1")
     except Exception:
@@ -257,6 +255,8 @@ async def simulate_pipeline(
         tracker=tracker,
         settings=s,
         seed=seed,
+        borrower_context=b_context_agent1,
+        borrower_persona_ctx=bp_context,
     )
 
     # Check for early exit
@@ -294,6 +294,8 @@ async def simulate_pipeline(
         tracker=tracker,
         settings=s,
         seed=seed,
+        borrower_context=b_context_agent2,
+        borrower_persona_ctx=bp_context,
     )
 
     # Check if deal agreed during Resolution — exit early
@@ -346,6 +348,8 @@ async def simulate_pipeline(
         tracker=tracker,
         settings=s,
         seed=seed,
+        borrower_context=b_context_agent3,
+        borrower_persona_ctx=bp_context,
     )
 
     # ---- Final outcome ----
@@ -388,6 +392,10 @@ async def simulate_agent1(
     """
     s = settings or get_settings()
 
+    borrower_profile = get_random_borrower(seed)
+    b_context = borrower_context_block(borrower_profile)
+    bp_context = borrower_persona_context(borrower_profile)
+
     transcript = await _run_agent_conversation(
         agent_type=AgentType.ASSESSMENT,
         system_prompt=agent_config.agent1_prompt,
@@ -397,6 +405,8 @@ async def simulate_agent1(
         tracker=tracker,
         settings=s,
         seed=seed,
+        borrower_context=b_context,
+        borrower_persona_ctx=bp_context,
     )
 
     outcome = _determine_outcome(transcript)

@@ -1,7 +1,8 @@
 """
 Meta-evaluation cycle — the evaluator of the evaluator.
 
-This is the ONLY place rubrics, weights, and compliance rules can change.
+This is the ONLY place rubrics and weights can change.
+COMPLIANCE RULES ARE IMMUTABLE — no code path can modify them.
 It runs as a separate cycle from the evolution loop, triggered every N
 generations. Uses INDEPENDENT second-order criteria to judge whether
 the primary evaluation methodology is working correctly.
@@ -78,8 +79,8 @@ async def run_meta_eval(
     # Gather aggregate evidence
     evidence = _gather_evidence(archive)
 
-    # Load worst conversation transcripts for direct inspection
-    transcript_evidence = _load_worst_transcripts(archive, n=3)
+    # Load ALL conversation transcripts for direct inspection — no truncation
+    transcript_evidence = _load_worst_transcripts(archive, n=None)
     evidence["sample_transcripts"] = transcript_evidence
 
     # Ask the judge model to analyze (with transcripts)
@@ -111,23 +112,29 @@ async def run_meta_eval(
     return eval_config
 
 
-def _load_worst_transcripts(archive: Any, n: int = 3) -> list[dict]:
-    """Load worst-scoring conversation transcripts for meta-eval inspection."""
+def _load_worst_transcripts(archive: Any, n: int | None = None) -> list[dict]:
+    """
+    Load conversation transcripts for meta-eval inspection.
+
+    ZERO truncation on message content — meta-eval sees the full conversation.
+    If n is None, loads ALL conversations (budget-checked by caller).
+    """
     all_scores = []
     for entry in archive.entries:
         for score in entry.scores:
             all_scores.append((score, entry.version_id))
 
-    # Sort by weighted_total, get worst
+    # Sort by weighted_total (worst first)
     all_scores.sort(key=lambda x: x[0].weighted_total)
-    worst = all_scores[:n]
+    if n is not None:
+        all_scores = all_scores[:n]
 
     transcripts = []
-    for score, vid in worst:
+    for score, vid in all_scores:
         t = archive.get_transcript(score.conversation_id)
         if not t:
             continue
-        # Collect failing checks
+        # Collect ALL failing checks
         failing = []
         for ak, asc in score.agent_scores.items():
             for k, v in asc.goal.checks.items():
@@ -136,18 +143,28 @@ def _load_worst_transcripts(archive: Any, n: int = 3) -> list[dict]:
             for k, v in asc.quality.checks.items():
                 if not v:
                     failing.append(f"{ak}/quality/{k}")
+            for k, v in asc.compliance.rule_results.items():
+                if not v:
+                    failing.append(f"{ak}/compliance/{k}")
+        for hk, hv in score.handoff_scores.items():
+            for k, v in hv.checks.items():
+                if not v:
+                    failing.append(f"{hk}/{k}")
         for k, v in score.system_checks.checks.items():
             if not v:
                 failing.append(f"system/{k}")
 
+        # FULL transcript — every message, no content truncation
         transcripts.append({
             "conversation_id": score.conversation_id,
             "persona": score.persona_type.value,
             "total": score.weighted_total,
             "failing": failing,
-            "agent1": [{"role": m["role"], "content": m["content"][:300]} for m in t.get("agent1", [])[:6]],
-            "agent2": [{"role": m["role"], "content": m["content"][:300]} for m in t.get("agent2", [])[:6]],
-            "agent3": [{"role": m["role"], "content": m["content"][:300]} for m in t.get("agent3", [])[:6]],
+            "agent1": [{"role": m["role"], "content": m["content"]} for m in t.get("agent1", [])],
+            "agent2": [{"role": m["role"], "content": m["content"]} for m in t.get("agent2", [])],
+            "agent3": [{"role": m["role"], "content": m["content"]} for m in t.get("agent3", [])],
+            "handoff_1": t.get("handoff_1"),
+            "handoff_2": t.get("handoff_2"),
         })
 
     return transcripts
@@ -292,22 +309,53 @@ def _lookup_hardcoded_criterion(check_key: str) -> str:
 
 
 def _format_sample_transcripts(transcripts: list[dict]) -> str:
-    """Format sample transcripts for the meta-eval prompt."""
+    """
+    Format ALL transcripts for the meta-eval prompt — ZERO content truncation.
+    Uses a token budget to fit within gpt-4o's 128K context.
+    """
     if not transcripts:
         return "  No transcripts available"
+
+    from agents.prompts import count_tokens
+
+    MAX_TRANSCRIPT_TOKENS = 80_000
     parts = []
+    tokens_used = 0
+
+    parts.append(f"  Total conversations: {len(transcripts)}")
+
     for i, t in enumerate(transcripts):
-        parts.append(f"\n  ### Sample {i+1}: {t.get('persona', '?')} (score: {t.get('total', 0):.2f})")
+        conv_parts = []
+        conv_parts.append(f"\n  ### Conversation {i+1}/{len(transcripts)}: {t.get('persona', '?')} (score: {t.get('total', 0):.2f})")
+
         failing = t.get("failing", [])
         if failing:
-            parts.append(f"  FAILING: {', '.join(failing[:10])}")
+            conv_parts.append(f"  FAILING: {', '.join(failing)}")  # ALL criteria, no truncation
+
         for stage in ["agent1", "agent2", "agent3"]:
             msgs = t.get(stage, [])
             if msgs:
-                parts.append(f"  --- {stage} ---")
-                for m in msgs[:4]:
+                conv_parts.append(f"  --- {stage} ({len(msgs)} messages) ---")
+                for m in msgs:
                     role = "AGENT" if m.get("role") == "assistant" else "BORROWER"
-                    parts.append(f"  [{role}] {m.get('content', '')[:200]}")
+                    conv_parts.append(f"  [{role}] {m.get('content', '')}")  # FULL content
+
+        for hk in ["handoff_1", "handoff_2"]:
+            h = t.get(hk)
+            if h and isinstance(h, dict):
+                conv_parts.append(f"  --- {hk} ({h.get('token_count', '?')} tok) ---")
+                conv_parts.append(f"  {h.get('text', '')}")
+
+        conv_text = "\n".join(conv_parts)
+        conv_tokens = count_tokens(conv_text)
+
+        if tokens_used + conv_tokens > MAX_TRANSCRIPT_TOKENS:
+            parts.append(f"\n  [Stopped at {i}/{len(transcripts)} conversations — context budget reached.]")
+            break
+
+        parts.extend(conv_parts)
+        tokens_used += conv_tokens
+
     return "\n".join(parts)
 
 
@@ -355,7 +403,8 @@ WHAT YOU CAN CHANGE:
 3. Adjust scoring weights if needed.
 
 WHAT NOT TO DO:
-- NEVER change compliance rules. They are IMMUTABLE.
+- NEVER change compliance rules. They are PERMANENTLY IMMUTABLE. No code path can modify them.
+  Even if you propose compliance changes, they will be silently dropped.
 - Don't rewrite criteria that are working (30-70% pass range is healthy).
 - Only rewrite criteria where 0% pass is clearly wrong based on evidence.
 
@@ -430,9 +479,11 @@ def _apply_with_guardrails(result: MetaEvalResult, current: EvalConfig) -> EvalC
     new_weights = dict(current.scoring_weights)
     changed = False
 
-    # COMPLIANCE RULES ARE IMMUTABLE
+    # COMPLIANCE RULES ARE PERMANENTLY IMMUTABLE — hard block
     if changes.get("compliance_rules"):
-        logger.info("Meta-eval: ignoring proposed compliance rule changes (immutable)")
+        logger.warning("Meta-eval: BLOCKED proposed compliance rule changes — compliance rules are IMMUTABLE")
+        # Explicitly remove to prevent any downstream leak
+        changes.pop("compliance_rules", None)
 
     # Apply rubric overrides (the main power of meta-eval)
     new_overrides = dict(current.rubric_overrides) if hasattr(current, 'rubric_overrides') else {}

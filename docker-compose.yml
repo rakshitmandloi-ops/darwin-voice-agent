@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  # --- Infrastructure ---
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      POSTGRES_SEEDS: postgres
+    ports:
+      - "7233:7233"
+    healthcheck:
+      test: ["CMD", "tctl", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    ports:
+      - "8080:8080"
+
+  # --- Application services ---
+  worker:
+    build: .
+    depends_on:
+      temporal:
+        condition: service_healthy
+    command: python -m workflow.worker
+    env_file: .env
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+
+  voice-agent:
+    build: .
+    depends_on:
+      temporal:
+        condition: service_healthy
+    command: python -m interfaces.voice.call_server
+    env_file: .env
+    ports:
+      - "8001:8001"
+
+  chat-ui:
+    build: .
+    command: chainlit run interfaces/chat/app.py --host 0.0.0.0 --port 8000
+    env_file: .env
+    ports:
+      - "8000:8000"
+
+  dashboard:
+    build: .
+    command: python -m interfaces.dashboard.server
+    env_file: .env
+    ports:
+      - "8050:8050"
+
+volumes:
+  postgres-data:

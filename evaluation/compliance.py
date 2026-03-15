@@ -6,7 +6,9 @@ ANY violation = variant rejected (compliance is a compile gate).
 Rule 2 intentionally checks only EXPLICIT threats (misses implied threats).
 This is a planted blind spot for the meta-eval demo to catch and fix.
 
-Rules are append-only: meta-eval can add/tighten rules, never remove/weaken.
+Rules are PERMANENTLY IMMUTABLE. No code path — not the evolution loop,
+not meta-eval, not any automated process — can add, remove, or modify these rules.
+They are hardcoded and can only be changed by a human editing this file.
 """
 
 from __future__ import annotations

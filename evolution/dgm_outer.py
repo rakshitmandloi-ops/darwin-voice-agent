@@ -13,8 +13,10 @@ Rubrics are FIXED during evolution. Only the meta-eval cycle changes them.
 
 from __future__ import annotations
 
+import json as _json_mod
 import logging
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from agents.prompts import get_seed_prompts
@@ -68,7 +70,7 @@ async def run_evolution(
         archive = Archive(s)
 
     # Live state for dashboard
-    from live_state import get_live_state
+    from evolution.live_state import get_live_state
     ls = get_live_state(s.logs_dir)
 
     # Wire in meta-eval if enabled and no custom fn provided
@@ -95,6 +97,9 @@ async def run_evolution(
     for entry in sorted(archive.entries, key=lambda e: e.generation):
         if entry.mutation_description:
             recent_mutations.append(entry.mutation_description[:100])
+
+    # Technique 1: GEPA-style reflective lessons
+    evolution_lessons: list[str] = []
 
     best_score = archive.get_best().mean_score
     plateau_count = 0
@@ -131,11 +136,26 @@ async def run_evolution(
                 trajectory = analyze_trajectory(parent, archive.entries)
                 worst_convos = _get_worst_conversations(parent, archive)
 
+                # Technique 4: Get best conversations
+                best_convos = _get_best_conversations(parent, archive)
+
+                # Technique 2: 25% chance of crossover
+                import random as _rnd
+                crossover_other: ArchiveEntry | None = None
+                active_entries = archive.get_active()
+                if len(active_entries) >= 2 and _rnd.Random(gen * 1000 + parent_idx).random() < 0.25:
+                    candidates = [e for e in active_entries if e.version_id != parent.version_id]
+                    if candidates:
+                        crossover_other = _rnd.Random(gen * 1000 + parent_idx + 1).choice(candidates)
+
                 mutation = await rewrite(
                     parent, trajectory, tracker,
                     recent_mutations=recent_mutations,
                     worst_conversations=worst_convos,
                     settings=s,
+                    lessons=evolution_lessons,
+                    crossover_parent=crossover_other,
+                    best_conversations=best_convos,
                 )
 
                 if not mutation.components_modified:
@@ -178,7 +198,8 @@ async def run_evolution(
 
             for result in results:
                 if isinstance(result, Exception):
-                    logger.warning(f"  Child failed: {result}")
+                    import traceback as _tb
+                    logger.warning(f"  Child failed: {result}\n{''.join(_tb.format_exception(result))}")
                 elif result is not None:
                     children.append(result)
 
@@ -209,11 +230,38 @@ async def run_evolution(
                 else:
                     ls.set_promoting(child.version_id, f"not promoted (score={child.mean_score:.2f})")
 
+            # 4b. Build GEPA-style lessons from this generation
+            for child in children:
+                parent_entry = archive.get(child.parent_id) if child.parent_id else None
+                score_diff = (child.mean_score - parent_entry.mean_score) if parent_entry else 0.0
+                status = "PROMOTED" if child.promoted else ("DISCARDED" if child.discarded else "not promoted")
+                mutation_desc = child.mutation_description[:80] if child.mutation_description else "unknown change"
+                lesson = (
+                    f"LESSON (Gen {gen}): [{mutation_desc}] → {status}. "
+                    f"Score diff: {score_diff:+.2f}. "
+                )
+                if child.promoted:
+                    lesson += "This change WORKED — consider extending it."
+                elif child.discarded:
+                    reason = child.discard_reason or "unknown"
+                    lesson += f"DISCARDED ({reason}) — avoid this direction."
+                else:
+                    lesson += "Not enough improvement — try a different angle."
+                evolution_lessons.append(lesson)
+
+                # Persist lesson to disk (JSONL)
+                _persist_lesson(
+                    archive=archive,
+                    generation=gen,
+                    variant=child.version_id,
+                    lesson=lesson,
+                )
+
             # 5. Meta-eval hook
             if meta_eval_fn and gen > 0 and gen % s.meta_eval.frequency == 0:
                 logger.info(f"  Running meta-eval at generation {gen}")
                 try:
-                    from live_state import get_live_state as _gls
+                    from evolution.live_state import get_live_state as _gls
                     _gls().set_promoting("meta-eval", f"Running meta-evaluation at Gen {gen}...")
                 except Exception:
                     pass
@@ -260,6 +308,24 @@ async def run_evolution(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _persist_lesson(
+    archive: Archive,
+    generation: int,
+    variant: str,
+    lesson: str,
+) -> None:
+    """Append a single lesson to the batch's lessons.jsonl file."""
+    lessons_path = archive._batch_dir / "lessons.jsonl"
+    record = {
+        "generation": generation,
+        "variant": variant,
+        "lesson": lesson,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    with open(lessons_path, "a") as f:
+        f.write(_json_mod.dumps(record) + "\n")
+
 
 def _export_run_config(archive: Archive, eval_config: EvalConfig, settings: Settings) -> None:
     """Export run_config.json for reproducibility — all seeds, model versions, temperatures."""
@@ -327,14 +393,14 @@ def _get_worst_conversations(
     Get the worst-scoring conversations for this parent variant,
     with full transcripts loaded from archive storage.
 
-    Returns up to 3 worst conversations with transcripts + failing criteria.
+    Returns ALL worst conversations with transcripts + failing criteria.
     """
     if not parent.scores:
         return []
 
-    # Sort by weighted_total, get worst 3
+    # Sort by weighted_total, return all (128K context allows full conversations)
     sorted_scores = sorted(parent.scores, key=lambda s: s.weighted_total)
-    worst = sorted_scores[:3]
+    worst = sorted_scores
 
     result = []
     for score in worst:
@@ -367,16 +433,91 @@ def _get_worst_conversations(
             if not passed:
                 failing.append(f"system/{check_name}")
 
+        # Technique 3: TextGrad-style textual gradients
+        textual_gradients = []
+        for criterion in failing:
+            # Parse criterion to find the relevant agent and check type
+            parts_c = criterion.split("/", 1)
+            if len(parts_c) != 2:
+                continue
+            agent_key, check_info = parts_c
+            # Only look up actual agent transcript keys (not handoff/system)
+            resolved_key = None
+            for ak in ["agent1", "agent2", "agent3"]:
+                if agent_key == ak or agent_key.startswith(ak):
+                    resolved_key = ak
+                    break
+            if not resolved_key:
+                continue  # Skip handoff/system criteria for gradients
+            agent_msgs = transcript.get(resolved_key, [])
+            if not agent_msgs or not isinstance(agent_msgs, list):
+                continue
+            # Extract the last assistant message as the problematic one
+            assistant_msgs = [m for m in agent_msgs if isinstance(m, dict) and m.get("role") == "assistant"]
+            if assistant_msgs:
+                last_msg = assistant_msgs[-1].get("content", "")
+                # Truncate for gradient display
+                snippet = last_msg[:120] + "..." if len(last_msg) > 120 else last_msg
+                gradient = f"GRADIENT for {criterion}: Agent said: \"{snippet}\". This failed the '{check_info}' check."
+                if "quality:concise" in criterion:
+                    word_count = len(last_msg.split())
+                    gradient += f" Response was {word_count} words — should be shorter and more direct."
+                elif "quality" in check_info:
+                    gradient += " Review tone and content quality."
+                elif "goal" in check_info or "completion" in check_info.lower():
+                    gradient += " The agent did not achieve the required goal in this exchange."
+                elif "compliance" in check_info:
+                    gradient += " A compliance rule was violated — check phrasing."
+                elif "handoff" in criterion or "system" in criterion:
+                    gradient += " Context was not properly transferred or referenced."
+                textual_gradients.append(gradient)
+
         conv_data = {
             "conversation_id": score.conversation_id,
             "persona_type": score.persona_type.value,
             "total": score.weighted_total,
             "failing_criteria": failing,
+            "textual_gradients": textual_gradients,
             "agent1": transcript.get("agent1", []),
             "agent2": transcript.get("agent2", []),
             "agent3": transcript.get("agent3", []),
             "handoff_1": transcript.get("handoff_1"),
             "handoff_2": transcript.get("handoff_2"),
+        }
+        result.append(conv_data)
+
+    return result
+
+
+def _get_best_conversations(
+    parent: ArchiveEntry,
+    archive: Archive,
+) -> list[dict]:
+    """
+    Get the best-scoring conversations for this parent variant (Technique 4: Bootstrap Few-Shot).
+    Returns conversations with transcripts, suitable for showing the rewriter
+    examples of ideal agent behavior.
+    """
+    if not parent.scores:
+        return []
+
+    # Sort by weighted_total descending, take top 3
+    sorted_scores = sorted(parent.scores, key=lambda s: s.weighted_total, reverse=True)
+    best = sorted_scores[:3]
+
+    result = []
+    for score in best:
+        transcript = archive.get_transcript(score.conversation_id)
+        if not transcript:
+            continue
+
+        conv_data = {
+            "conversation_id": score.conversation_id,
+            "persona_type": score.persona_type.value,
+            "total": score.weighted_total,
+            "agent1": transcript.get("agent1", []),
+            "agent2": transcript.get("agent2", []),
+            "agent3": transcript.get("agent3", []),
         }
         result.append(conv_data)
 
@@ -394,8 +535,9 @@ async def _create_seed_entry(
     ac = AgentConfig(version_id="v0", **prompts)
     vc = VariantConfig(agent_config=ac, eval_config=eval_config)
 
-    # Run 5 conversations (1 per persona)
-    conversations = await _simulate_batch(vc, n_personas=5, runs_per=1, tracker=tracker, settings=settings, archive=archive, seed_offset=0)
+    # Run 1 conversation per persona for seed evaluation
+    n_personas = settings.simulation.personas_per_eval
+    conversations = await _simulate_batch(vc, n_personas=n_personas, runs_per=1, tracker=tracker, settings=settings, archive=archive, seed_offset=0)
     scores = await _evaluate_batch(conversations, eval_config, tracker, settings)
 
     return ArchiveEntry(
@@ -427,9 +569,9 @@ async def _staged_evaluate(
     all_conversations: list[Conversation] = []
     all_scores: list[ConversationScores] = []
 
-    # Stage 1: 2 conversations
+    # Stage 1: quick signal (2 personas x 1 run)
     stage1_convos = await _simulate_batch(
-        child_vc, n_personas=2, runs_per=1,
+        child_vc, n_personas=min(2, settings.simulation.personas_per_eval), runs_per=1,
         tracker=tracker, settings=settings, archive=archive,
         seed_offset=generation * 100,
     )
@@ -454,14 +596,14 @@ async def _staged_evaluate(
         archive.add(entry)
         return entry
 
-    # Stage 2: +8 more conversations (total 10)
+    # Stage 2: moderate signal (all personas x 1 run)
+    n_personas = settings.simulation.personas_per_eval
     stage2_convos = await _simulate_batch(
-        child_vc, n_personas=5, runs_per=2,
+        child_vc, n_personas=n_personas, runs_per=1,
         tracker=tracker, settings=settings, archive=archive,
         seed_offset=generation * 100 + 10,
         exclude_seeds={c.seed for c in all_conversations},
     )
-    stage2_convos = stage2_convos[:8]
     stage2_scores = await _evaluate_batch(stage2_convos, eval_config, tracker, settings)
     all_conversations.extend(stage2_convos)
     all_scores.extend(stage2_scores)
@@ -472,12 +614,11 @@ async def _staged_evaluate(
 
     if avg_score >= best_in_archive * 0.8:
         stage3_convos = await _simulate_batch(
-            child_vc, n_personas=5, runs_per=5,
+            child_vc, n_personas=n_personas, runs_per=settings.simulation.runs_per_persona,
             tracker=tracker, settings=settings, archive=archive,
             seed_offset=generation * 100 + 50,
             exclude_seeds={c.seed for c in all_conversations},
         )
-        stage3_convos = stage3_convos[:15]
         stage3_scores = await _evaluate_batch(stage3_convos, eval_config, tracker, settings)
         all_conversations.extend(stage3_convos)
         all_scores.extend(stage3_scores)
@@ -548,15 +689,21 @@ async def _try_promote(
             if not t:
                 continue
             # Rebuild Conversation for strict grader
-            from models import Transcript, Message, Persona, PersonaType, HandoffSummary, Conversation, Outcome
+            from models import Transcript, Message, Persona, PersonaType, HandoffSummary, Conversation, Outcome, AgentType
             def _mk_t(msgs):
                 return Transcript(messages=tuple(Message(role=m["role"], content=m["content"]) for m in msgs))
             persona = Persona(name=t.get("persona", ""), persona_type=PersonaType(t.get("persona_type", "cooperative")),
                               system_prompt="", voice_system_prompt="", difficulty=0.5)
-            h1 = HandoffSummary(text=t["handoff_1"]["text"], token_count=t["handoff_1"]["token_count"],
-                                source_agent=AgentType.ASSESSMENT, target_agent=AgentType.RESOLUTION) if t.get("handoff_1") else None
-            h2 = HandoffSummary(text=t["handoff_2"]["text"], token_count=t["handoff_2"]["token_count"],
-                                source_agent=AgentType.RESOLUTION, target_agent=AgentType.FINAL_NOTICE) if t.get("handoff_2") else None
+            h1_dict = t.get("handoff_1")
+            h1 = HandoffSummary(
+                text=h1_dict.get("text", ""), token_count=h1_dict.get("token_count", 0),
+                source_agent=AgentType.ASSESSMENT, target_agent=AgentType.RESOLUTION,
+            ) if isinstance(h1_dict, dict) else None
+            h2_dict = t.get("handoff_2")
+            h2 = HandoffSummary(
+                text=h2_dict.get("text", ""), token_count=h2_dict.get("token_count", 0),
+                source_agent=AgentType.RESOLUTION, target_agent=AgentType.FINAL_NOTICE,
+            ) if isinstance(h2_dict, dict) else None
             conv = Conversation(conversation_id=ws.conversation_id, persona=persona, seed=t.get("seed", 0),
                                 agent1_transcript=_mk_t(t.get("agent1", [])), agent2_transcript=_mk_t(t.get("agent2", [])),
                                 agent3_transcript=_mk_t(t.get("agent3", [])), handoff_1=h1, handoff_2=h2,

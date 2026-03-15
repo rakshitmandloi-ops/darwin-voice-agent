@@ -53,8 +53,8 @@ class SettlementPolicy(BaseModel, frozen=True):
 
 class SimulationConfig(BaseModel, frozen=True):
     conversation_turns: int = 10
-    personas_per_eval: int = 5
-    runs_per_persona: int = 5
+    personas_per_eval: int = 8
+    runs_per_persona: int = 3
 
     @property
     def total_convos(self) -> int:

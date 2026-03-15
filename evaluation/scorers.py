@@ -15,6 +15,7 @@ import json
 from config import Settings, get_settings
 from evaluation.compliance import check_compliance
 from evaluation.cost_tracker import CostTracker
+from evaluation.deal_quality import score_deal_quality
 from evaluation.rubrics import (
     DEFAULT_SCORING_WEIGHTS,
     GOAL_CHECKS,
@@ -131,6 +132,10 @@ async def score_conversation(
     # --- System continuity ---
     system_checks = await _score_system(conversation, tracker, s, overrides)
 
+    # --- Deal quality ---
+    deal_quality_result = score_deal_quality(conversation, conversation.persona.persona_type)
+    deal_quality_score = deal_quality_result.deal_quality_score
+
     # --- Weighted total ---
     weights = eval_config.scoring_weights
     avg_goal = _mean([a.goal_score for a in agent_scores.values()])
@@ -145,6 +150,7 @@ async def score_conversation(
         + weights.get("quality", 0.2) * avg_quality
         + weights.get("handoff", 0.15) * avg_handoff
         + weights.get("system", 0.15) * sys_score
+        + weights.get("deal_quality", 0.0) * deal_quality_score
     )
 
     resolved = 1.0 if conversation.outcome in (Outcome.DEAL_AGREED, Outcome.HARDSHIP_REFERRAL) else 0.0

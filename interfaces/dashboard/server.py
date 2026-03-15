@@ -1,6 +1,6 @@
 """
 Interactive evolution dashboard with zoomable graph.
-python dashboard.py -> http://localhost:8050
+python -m interfaces.dashboard.server -> http://localhost:8050
 """
 
 import json
@@ -8,7 +8,7 @@ import difflib
 from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-LOGS_DIR = Path(__file__).parent / "logs"
+LOGS_DIR = Path(__file__).resolve().parent.parent.parent / "logs"
 
 HTML = r"""<!DOCTYPE html>
 <html><head>
@@ -1393,6 +1393,11 @@ class Handler(SimpleHTTPRequestHandler):
             self._json(get_meta_eval(batch_id=batch))
         elif parsed.path == '/api/meta-eval-sim':
             self._json(get_meta_eval_sim())
+        elif parsed.path == '/api/lessons':
+            batch = qs.get('batch', [None])[0]
+            self._json(get_lessons(batch_id=batch))
+        elif parsed.path == '/api/compare':
+            self._json(get_compare())
         elif parsed.path in ('/', '/index.html'):
             self._html(HTML)
         else:
@@ -1800,6 +1805,91 @@ def get_diff(parent_id: str, child_id: str, batch_id: str | None = None) -> dict
         'mutation_desc': data[child_id].get('mutation_description', ''),
         'diffs': diffs,
     }
+
+
+def get_lessons(batch_id: str | None = None) -> list[dict]:
+    """Read lessons.jsonl from a batch directory and return as JSON array."""
+    batch_dir = _resolve_batch_dir(batch_id)
+    lessons_path = batch_dir / "lessons.jsonl"
+    if not lessons_path.exists():
+        return []
+    lessons = []
+    with open(lessons_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                lessons.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+    return lessons
+
+
+def get_compare() -> list[dict]:
+    """Load all batches and return a comparison table for parallel runs."""
+    runs_dir = LOGS_DIR / "runs"
+    if not runs_dir.exists():
+        return []
+    results = []
+    for d in sorted(runs_dir.iterdir(), reverse=True):
+        if not d.is_dir():
+            continue
+        meta_path = d / "meta.json"
+        meta = {}
+        if meta_path.exists():
+            with open(meta_path) as f:
+                meta = json.load(f)
+
+        archive_path = d / "archive.json"
+        variants_count = 0
+        best_score = 0.0
+        best_variant = ""
+        generations = 0
+        total_cost = 0.0
+
+        if archive_path.exists():
+            with open(archive_path) as f:
+                data = json.load(f)
+            variants_count = len(data)
+            if data:
+                generations = max(e.get("generation", 0) for e in data.values())
+                # Find best variant (non-discarded)
+                for vid, e in data.items():
+                    if e.get("discarded", False):
+                        continue
+                    scores = e.get("scores", [])
+                    if not scores:
+                        continue
+                    avg = sum(s["weighted_total"] for s in scores) / len(scores)
+                    if avg > best_score:
+                        best_score = avg
+                        best_variant = vid
+
+        # Read cost from costs.json if it exists in batch dir
+        costs_path = d / "costs.json"
+        if costs_path.exists():
+            with open(costs_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                        total_cost += entry.get("cost_usd", 0)
+                    except json.JSONDecodeError:
+                        pass
+
+        results.append({
+            "batch_id": d.name,
+            "variants_count": variants_count,
+            "best_score": round(best_score, 4),
+            "best_variant": best_variant,
+            "total_cost": round(total_cost, 4),
+            "generations": generations,
+            "status": meta.get("status", "unknown"),
+        })
+    return results
 
 
 if __name__ == '__main__':
