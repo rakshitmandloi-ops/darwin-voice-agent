@@ -559,7 +559,7 @@ async function showEdgeTooltip(edge, mx, my) {
     positionTooltip(mx, my);
 
     try {
-      const r = await fetch(`/api/diff?parent=${encodeURIComponent(edge.from)}&child=${encodeURIComponent(edge.to)}`);
+      const r = await fetch(`/api/diff?parent=${encodeURIComponent(edge.from)}&child=${encodeURIComponent(edge.to)}&batch=${encodeURIComponent(currentBatch||'')}`);
       diffCache[cacheKey] = await r.json();
     } catch(e) {
       diffCache[cacheKey] = {diffs: {}, error: e.message};
@@ -873,7 +873,7 @@ async function showEdgeDetail(edge) {
   const cacheKey = edge.from + '|' + edge.to;
   if (!diffCache[cacheKey]) {
     try {
-      const r = await fetch(`/api/diff?parent=${encodeURIComponent(edge.from)}&child=${encodeURIComponent(edge.to)}`);
+      const r = await fetch(`/api/diff?parent=${encodeURIComponent(edge.from)}&child=${encodeURIComponent(edge.to)}&batch=${encodeURIComponent(currentBatch||'')}`);
       diffCache[cacheKey] = await r.json();
     } catch(e) {
       diffCache[cacheKey] = {diffs: {}};
