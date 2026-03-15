@@ -2,6 +2,20 @@
 
 ## V1: Basic Loop
 
+```mermaid
+flowchart LR
+    A[Seed Prompts] --> B[Simulate\n5 personas\n10 turns each]
+    B --> C[Score\n93 binary checks]
+    C --> D[Rewriter gpt-4o\n3 worst convos\n200 chars truncated]
+    D --> E[Mutate\n1-2 components]
+    E --> B
+    C --> F{Bootstrap CI\nchild vs parent}
+    F -->|CI > 0| G[PROMOTE]
+    F -->|CI ≤ 0| H[discard]
+    C -.->|every 4 gens| I[Meta-eval\ngpt-4o\nrewrite rubrics]
+    I -.-> C
+```
+
 ```
 Pick parent → Rewriter sees 3 worst convos (truncated) → Mutate 1 component → Run 5 personas → Score 93 checks → Compare child vs parent (bootstrap CI) → Promote or discard → Repeat
 ```
@@ -29,6 +43,29 @@ Result: seed 6.71 → best 7.26 (+8.3%), but agent2 mutated 26/29 times. Agent3 
 ---
 
 ## V2: Enhanced Loop
+
+```mermaid
+flowchart LR
+    A[Seed + Borrower Context] --> B[Simulate\n8 personas incl adversarial\nstaged 2→10→34]
+    B --> C[Score\n93 checks + deal quality\n+ TextGrad feedback]
+    C --> D[Rewriter gpt-4o\nALL convos zero truncation\n+ GEPA lessons\n+ best convos as examples]
+    D --> E{25% crossover?}
+    E -->|yes| F[Merge 2 parents]
+    E -->|no| G[Mutate 1-2 components]
+    F --> B
+    G --> B
+    C --> H{Bootstrap CI\n+ strict grader\n+ variance check}
+    H -->|promoted| I[PROMOTE\n+ record lesson]
+    H -->|not promoted| J[discard\n+ record lesson]
+    I --> D
+    J --> D
+    C -.->|every 4 gens| K[Meta-eval\ngpt-4o independent\nrewrite rubrics\nadjust weights]
+    K -.-> C
+    L[Compliance R1-R8\nIMMUTABLE] -.->|cannot change| K
+    D --> M{3 fails\nsame component?}
+    M -->|yes| N[ESCALATE\ntarget different component]
+    N --> B
+```
 
 ```
 Pick parent → Rewriter sees ALL convos (zero truncation) + GEPA lessons + TextGrad feedback + best convos as examples → 25% chance: crossover two parents instead → Mutate → Run 8 personas (including adversarial) staged 2→10→34 → Score 93 checks + deal quality → Compare → Record lesson → Repeat
