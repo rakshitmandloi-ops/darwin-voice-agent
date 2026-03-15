@@ -61,5 +61,4 @@ seed: 7.51, gen1: 7.03/7.20/7.14 (one discarded 5.08)
 gen2: agent1_prompt targeted (escalation working!)
 rewriter: $0.17/call with full convos (was $0.03 truncated)
 
-
-dashboard shows live evolution graph — click nodes to see prompt diffs, scores per persona, conversation transcripts. batch selector for comparing parallel runs. lessons.jsonl persisted per batch.
+dashboard — evolution graph, prompt diffs, per-persona scores, transcripts. parallel run comparison.
