@@ -20,7 +20,7 @@ Thinking about IMP Independent components :
 Key decisions taken to start with :
  - Text simulation over voice for evaluation — Voice adds latency and cost with zero eval benefit. Same prompt, same LLM, just without STT/TTS wrapper. Saves ~$15 and ~4hrs runtime. Voice is production only.
  - use different grading loop for meta eval to prevent low score bias. gpt-4o-mini for regular scoring (31k calls, cheap). gpt-4o for meta-eval + strict grading (independent judgment, prevents leniency inheritance)
- - binary checks (93 per convo) not 1-10 scores. tried 1-10 first — got 7,7,8,7,7 for everything. zero discrimination. switched to yes/no x 93 checks. now can see exactly which criterion failed.
+ - grade based on definitive rubrics not vibes. each check is a specific yes/no question — "did agent verify identity using partial account number?" not "rate the conversation quality." this way when something fails we know EXACTLY what failed and why. the rewriter gets "agent2/goal:handles_objections FAILED" not "score dropped by 0.3 for unknown reasons." tried 1-10 first — got 7,7,8,7,7 for everything. zero discrimination between good and bad variants. switched to 93 binary checks per convo. now the failure is traceable: check failed -> which agent -> which message -> what should have been said instead (TextGrad). this is what makes the self-improvement loop actually work — without specific failure signals the rewriter is blind.
 
 
 Run 2 (longest run, 8 gens):
