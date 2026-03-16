@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from dotenv import load_dotenv
 from temporalio.client import Client
@@ -35,7 +36,8 @@ async def main() -> None:
     init_activity_context(tracker, settings)
 
     # Connect to Temporal server
-    client = await Client.connect("localhost:7233")
+    temporal_address = os.environ.get("TEMPORAL_ADDRESS", "localhost:7233")
+    client = await Client.connect(temporal_address)
 
     # Run worker
     worker = Worker(
